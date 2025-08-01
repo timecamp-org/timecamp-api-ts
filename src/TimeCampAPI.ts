@@ -1,5 +1,14 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { TimeCampUser, TimeCampAPIConfig, TimeCampAPIResponse } from './types';
+import { 
+  TimeCampUser, 
+  TimeCampAPIConfig, 
+  TimeCampAPIResponse, 
+  TimerStartRequest, 
+  TimerStopRequest, 
+  TimerEntry, 
+  TimerStatus,
+  TimerActionRequest
+} from './types';
 
 export class TimeCampAPI {
   private client: AxiosInstance;
@@ -36,6 +45,68 @@ export class TimeCampAPI {
       get: async (): Promise<TimeCampUser> => {
         try {
           const response: AxiosResponse<TimeCampUser> = await this.client.get('/me');
+          return response.data;
+        } catch (error) {
+          if (axios.isAxiosError(error)) {
+            throw new Error(`TimeCamp API error: ${error.response?.status} - ${JSON.stringify(error.response?.data)}`);
+          }
+          throw error;
+        }
+      }
+    };
+  }
+
+  private formatTimeCampDate(date?: string | Date): string {
+    const d = date ? new Date(date) : new Date();
+    return d.getFullYear() + '-' + 
+           String(d.getMonth() + 1).padStart(2, '0') + '-' + 
+           String(d.getDate()).padStart(2, '0') + ' ' +
+           String(d.getHours()).padStart(2, '0') + ':' +
+           String(d.getMinutes()).padStart(2, '0') + ':' +
+           String(d.getSeconds()).padStart(2, '0');
+  }
+
+  public get timer() {
+    return {
+      start: async (data?: TimerStartRequest): Promise<any> => {
+        try {
+          const payload: TimerActionRequest = {
+            action: 'start',
+            task_id: data?.task_id,
+            started_at: data?.started_at || this.formatTimeCampDate()
+          };
+          const response: AxiosResponse<any> = await this.client.post('/timer', payload);
+          return response.data;
+        } catch (error) {
+          if (axios.isAxiosError(error)) {
+            throw new Error(`TimeCamp API error: ${error.response?.status} - ${JSON.stringify(error.response?.data)}`);
+          }
+          throw error;
+        }
+      },
+
+      stop: async (data?: TimerStopRequest): Promise<any> => {
+        try {
+          const payload: TimerActionRequest = {
+            action: 'stop',
+            stopped_at: data?.stopped_at || this.formatTimeCampDate()
+          };
+          const response: AxiosResponse<any> = await this.client.post('/timer', payload);
+          return response.data;
+        } catch (error) {
+          if (axios.isAxiosError(error)) {
+            throw new Error(`TimeCamp API error: ${error.response?.status} - ${JSON.stringify(error.response?.data)}`);
+          }
+          throw error;
+        }
+      },
+
+      status: async (): Promise<any> => {
+        try {
+          const payload: TimerActionRequest = {
+            action: 'status'
+          };
+          const response: AxiosResponse<any> = await this.client.post('/timer', payload);
           return response.data;
         } catch (error) {
           if (axios.isAxiosError(error)) {
