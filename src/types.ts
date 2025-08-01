@@ -55,3 +55,50 @@ export interface TimerStatus {
   running: boolean;
   duration?: number;
 }
+
+export interface TimeCampTask {
+  task_id: number;
+  parent_id: number;
+  assigned_by?: number;
+  name: string;
+  external_task_id?: string;
+  external_parent_id?: string;
+  task_key?: string | null;
+  level: number;
+  archived: number;
+  keywords?: string;
+  budgeted?: number;
+  budget_unit: string;
+  root_group_id?: number;
+  billable: number;
+  note?: string;
+  public_hash?: string | null;
+  add_date?: string;
+  modify_time?: string;
+  color?: string;
+  user_access_type: number;
+  users?: {
+    [userId: string]: {
+      user_id: number;
+      role_id: number;
+    };
+  };
+  groups?: string[];
+  roles?: string[];
+  perms?: {
+    [permId: string]: number;
+  };
+  // Additional fields
+  [key: string]: any;
+}
+
+export interface TimeCampTasksResponse {
+  [key: string]: TimeCampTask;
+}
+
+export interface TasksAPIResponse {
+  success: boolean;
+  data?: TimeCampTask[];
+  message?: string;
+  error?: string;
+}

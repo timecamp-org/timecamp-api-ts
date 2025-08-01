@@ -7,7 +7,10 @@ import {
   TimerStopRequest, 
   TimerEntry, 
   TimerStatus,
-  TimerActionRequest
+  TimerActionRequest,
+  TimeCampTask,
+  TimeCampTasksResponse,
+  TasksAPIResponse
 } from './types';
 
 export class TimeCampAPI {
@@ -113,6 +116,47 @@ export class TimeCampAPI {
             throw new Error(`TimeCamp API error: ${error.response?.status} - ${JSON.stringify(error.response?.data)}`);
           }
           throw error;
+        }
+      }
+    };
+  }
+
+  public get tasks() {
+    return {
+      getActiveUserTasks: async (): Promise<TasksAPIResponse> => {
+        try {
+          // Make API request with ignoreAdminRights parameter
+          const response: AxiosResponse<TimeCampTasksResponse> = await this.client.get('/tasks', {
+            params: {
+              ignoreAdminRights: "1"
+            }
+          });
+
+          // Convert object to array, filter non-archived tasks, and remove tags field
+          const tasksArray: TimeCampTask[] = Object.values(response.data)
+            .filter((task: any) => task.archived === 0)
+            .map((task: any) => {
+              const { tags, ...taskWithoutTags } = task;
+              return taskWithoutTags as TimeCampTask;
+            });
+
+          return {
+            success: true,
+            data: tasksArray,
+            message: "Tasks fetched successfully"
+          };
+        } catch (error) {
+          console.error('Error fetching tasks:', error);
+          if (axios.isAxiosError(error)) {
+            return {
+              success: false,
+              error: `TimeCamp API error: ${error.response?.status} - ${JSON.stringify(error.response?.data)}`
+            };
+          }
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          };
         }
       }
     };

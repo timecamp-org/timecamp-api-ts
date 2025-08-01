@@ -19,6 +19,12 @@ const timecampApi = new TimeCampAPI("your-api-key");
 const user = await timecampApi.user.get();
 console.log(user);
 
+// Get tasks
+const tasksResponse = await timecampApi.tasks.getActiveUserTasks();
+if (tasksResponse.success) {
+  console.log(tasksResponse.data); // Array of non-archived tasks
+}
+
 // Timer operations
 const timerStatus = await timecampApi.timer.status();
 const startedTimer = await timecampApi.timer.start({ note: "Working on project" });
@@ -40,6 +46,14 @@ new TimeCampAPI(apiKey: string, config?: TimeCampAPIConfig)
 
 ### Methods
 
+| Method | Description | Parameters | Returns |
+|--------|-------------|------------|---------|
+| `user.get()` | Get information about the current user | None | `Promise<TimeCampUser>` |
+| `tasks.getActiveUserTasks()` | Get all non-archived tasks | None | `Promise<TasksAPIResponse>` |
+| `timer.start()` | Start a new timer | `data?: TimerStartRequest` | `Promise<any>` |
+| `timer.stop()` | Stop the currently running timer | `data?: TimerStopRequest` | `Promise<any>` |
+| `timer.status()` | Get the current timer status | None | `Promise<any>` |
+
 #### `user.get()`
 
 Get information about the current user.
@@ -54,6 +68,56 @@ interface TimeCampUser {
   display_name: string;
   synch_time: string;
   root_group_id: string;
+}
+```
+
+#### `tasks.getActiveUserTasks()`
+
+Get all non-archived tasks accessible to the current user.
+
+**Returns**: `Promise<TasksAPIResponse>`
+
+```typescript
+interface TasksAPIResponse {
+  success: boolean;
+  data?: TimeCampTask[];
+  message?: string;
+  error?: string;
+}
+
+interface TimeCampTask {
+  task_id: number;
+  parent_id: number;
+  assigned_by?: number;
+  name: string;
+  external_task_id?: string;
+  external_parent_id?: string;
+  task_key?: string | null;
+  level: number;
+  archived: number;
+  keywords?: string;
+  budgeted?: number;
+  budget_unit: string;
+  root_group_id?: number;
+  billable: number;
+  note?: string;
+  public_hash?: string | null;
+  add_date?: string;
+  modify_time?: string;
+  color?: string;
+  user_access_type: number;
+  users?: {
+    [userId: string]: {
+      user_id: number;
+      role_id: number;
+    };
+  };
+  groups?: string[];
+  roles?: string[];
+  perms?: {
+    [permId: string]: number;
+  };
+  [key: string]: any;
 }
 ```
 
@@ -124,49 +188,9 @@ interface TimerEntry {
 }
 ```
 
-## Testing
-
-The library includes test files to help you test the timer functionality with real API requests:
-
-### Basic Testing
-```bash
-# Build the project
-npm run build
-
-# Run basic example (requires TIMECAMP_API_KEY environment variable)
-node example.js
-
-# Run detailed timer tests
-node example.js --test
-```
-
-### Advanced Timer Testing
-```bash
-# Set your API key
-export TIMECAMP_API_KEY="your-actual-api-key"
-
-# Check timer status
-node timer-test.js --status
-
-# Start a timer
-node timer-test.js --start
-
-# Start timer with custom note
-node timer-test.js --start --note="Working on feature"
-
-# Start timer with task ID
-node timer-test.js --start --task-id=12345
-
-# Stop current timer
-node timer-test.js --stop
-
-# Run full test cycle (start, wait, stop)
-node timer-test.js --full
-```
-
 ## API Reference
 
-Based on the [TimeCamp API documentation](https://developer.timecamp.com/#/operations/post-timer).
+Based on the [TimeCamp API documentation](https://developer.timecamp.com/).
 
 ## License
 
