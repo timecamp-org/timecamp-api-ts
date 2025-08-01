@@ -1,11 +1,10 @@
 export interface TimeCampUser {
   user_id: string;
   email: string;
+  register_time: string;
   display_name: string;
-  timezone: string;
-  group_id: string;
-  user_access_role: string;
-  avatar_url?: string;
+  synch_time: string;
+  root_group_id: string;
 }
 
 export interface TimeCampAPIConfig {

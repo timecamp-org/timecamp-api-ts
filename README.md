@@ -29,7 +29,7 @@ new TimeCampAPI(apiKey: string, config?: TimeCampAPIConfig)
 
 - `apiKey`: Your TimeCamp API key
 - `config`: Optional configuration object
-  - `baseURL`: Custom API base URL (default: 'https://www.timecamp.com/third_party/api')
+  - `baseURL`: Custom API base URL (default: 'https://app.timecamp.com/third_party/api')
   - `timeout`: Request timeout in milliseconds (default: 10000)
 
 ### Methods
@@ -44,11 +44,10 @@ Get information about the current user.
 interface TimeCampUser {
   user_id: string;
   email: string;
+  register_time: string;
   display_name: string;
-  timezone: string;
-  group_id: string;
-  user_access_role: string;
-  avatar_url?: string;
+  synch_time: string;
+  root_group_id: string;
 }
 ```
 

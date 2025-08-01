@@ -16,14 +16,16 @@ export class TimeCampAPI {
       timeout: config?.timeout || 10000,
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'User-Agent': 'TimeCampAPI/NPM',
+        'Authorization': `Bearer ${this.apiKey}`,
       },
     });
 
     // Add request interceptor to include API key
     this.client.interceptors.request.use((config) => {
       config.params = {
-        ...config.params,
-        token: this.apiKey,
+        ...config.params
       };
       return config;
     });
@@ -37,7 +39,7 @@ export class TimeCampAPI {
           return response.data;
         } catch (error) {
           if (axios.isAxiosError(error)) {
-            throw new Error(`TimeCamp API error: ${error.response?.status} - ${error.response?.statusText}`);
+            throw new Error(`TimeCamp API error: ${error.response?.status} - ${JSON.stringify(error.response?.data)}`);
           }
           throw error;
         }

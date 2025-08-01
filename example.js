@@ -1,10 +1,12 @@
+require('dotenv').config();
 const { TimeCampAPI } = require('./dist');
 
 // Example usage
 async function example() {
   try {
-    // Replace with your actual API key
-    const timecampApi = new TimeCampAPI("your-api-key-here");
+    // Get API key from environment variable or use placeholder
+    const apiKey = process.env.TIMECAMP_API_KEY || "your-api-key-here";
+    const timecampApi = new TimeCampAPI(apiKey);
     
     // Get current user
     const user = await timecampApi.user.get();
