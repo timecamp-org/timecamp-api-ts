@@ -29,6 +29,27 @@ if (tasksResponse.success) {
 const timerStatus = await timecampApi.timer.status();
 const startedTimer = await timecampApi.timer.start({ note: "Working on project" });
 const stoppedTimer = await timecampApi.timer.stop();
+
+// Time entries operations
+const timeEntries = await timecampApi.timeEntries.get({
+  date_from: '2024-01-01',
+  date_to: '2024-01-31'
+});
+
+const newEntry = await timecampApi.timeEntries.create({
+  date: '2024-01-15',
+  duration: 3600, // 1 hour in seconds
+  description: 'Working on API integration',
+  start_time: '09:00:00',
+  end_time: '10:00:00'
+});
+
+const updatedEntry = await timecampApi.timeEntries.update(entryId, {
+  description: 'Updated description',
+  duration: 7200 // 2 hours
+});
+
+const deleteResult = await timecampApi.timeEntries.delete(entryId);
 ```
 
 ## API
@@ -53,6 +74,10 @@ new TimeCampAPI(apiKey: string, config?: TimeCampAPIConfig)
 | `timer.start()` | Start a new timer | `data?: TimerStartRequest` | `Promise<any>` |
 | `timer.stop()` | Stop the currently running timer | `data?: TimerStopRequest` | `Promise<any>` |
 | `timer.status()` | Get the current timer status | None | `Promise<any>` |
+| `timeEntries.get()` | Get time entries | `params?: TimeCampTimeEntriesRequest` | `Promise<TimeCampTimeEntry[]>` |
+| `timeEntries.create()` | Create a new time entry | `entry: TimeCampCreateTimeEntryRequest` | `Promise<TimeCampCreateTimeEntryResponse>` |
+| `timeEntries.update()` | Update an existing time entry | `id: number, data: Partial<TimeCampCreateTimeEntryRequest>` | `Promise<TimeCampCreateTimeEntryResponse>` |
+| `timeEntries.delete()` | Delete a time entry | `id: number` | `Promise<{success: boolean, message: string}>` |
 
 #### `user.get()`
 
@@ -187,6 +212,111 @@ interface TimerEntry {
   approved: boolean;
 }
 ```
+
+#### `timeEntries.get(params?: TimeCampTimeEntriesRequest)`
+
+Get time entries with optional filtering.
+
+**Parameters**:
+- `params` (optional): Filtering parameters
+  - `user_id`: Filter by user ID (optional)
+  - `task_id`: Filter by task ID (optional)
+  - `date_from`: Start date in YYYY-MM-DD format (optional)
+  - `date_to`: End date in YYYY-MM-DD format (optional)
+  - `format`: Response format, 'json' is automatically set (optional)
+
+**Returns**: `Promise<TimeCampTimeEntry[]>`
+
+```typescript
+interface TimeCampTimeEntriesRequest {
+  user_id?: string;
+  task_id?: string;
+  date_from?: string;
+  date_to?: string;
+  format?: string;
+}
+
+interface TimeCampTimeEntry {
+  id: number;
+  duration: number; // Duration in seconds
+  user_id: string;
+  user_name: string;
+  task_id: string;
+  task_note?: string;
+  last_modify: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  locked: string;
+  name: string;
+  addons_external_id: string;
+  billable: number;
+  invoiceId: string;
+  color: string;
+  description: string;
+  tags: TimeCampTag[];
+  hasEntryLocationHistory: boolean;
+}
+
+interface TimeCampTag {
+  tagListName: string;
+  tagListId: string;
+  tagId: string;
+  name: string;
+  mandatory: string;
+}
+```
+
+#### `timeEntries.create(entry: TimeCampCreateTimeEntryRequest)`
+
+Create a new time entry.
+
+**Parameters**:
+- `entry`: Time entry data
+  - `date`: Date in YYYY-MM-DD format (required)
+  - `duration`: Duration in seconds (required)
+  - `start_time`: Start time in HH:MM:SS format (required)
+  - `end_time`: End time in HH:MM:SS format (required)
+  - `task_id`: ID of the task (optional)
+  - `description`: Description of the work done (optional)
+
+**Returns**: `Promise<TimeCampCreateTimeEntryResponse>`
+
+```typescript
+interface TimeCampCreateTimeEntryRequest {
+  date: string;
+  duration: number; // in seconds
+  task_id?: string;
+  description?: string;
+  start_time: string;
+  end_time: string;
+}
+
+interface TimeCampCreateTimeEntryResponse {
+  success: boolean;
+  id?: string;
+  message: string;
+}
+```
+
+#### `timeEntries.update(id: number, data: Partial<TimeCampCreateTimeEntryRequest>)`
+
+Update an existing time entry.
+
+**Parameters**:
+- `id`: ID of the time entry to update (required)
+- `data`: Partial time entry data to update (supports partial updates)
+
+**Returns**: `Promise<TimeCampCreateTimeEntryResponse>`
+
+#### `timeEntries.delete(id: number)`
+
+Delete a time entry.
+
+**Parameters**:
+- `id`: ID of the time entry to delete (required)
+
+**Returns**: `Promise<{success: boolean, message: string}>`
 
 ## API Reference
 

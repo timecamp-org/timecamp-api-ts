@@ -102,3 +102,56 @@ export interface TasksAPIResponse {
   message?: string;
   error?: string;
 }
+
+export interface TimeCampTimeEntry {
+  id: number;
+  duration: number;
+  user_id: string;
+  user_name: string;
+  task_id: string;
+  task_note?: string;
+  last_modify: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  locked: string;
+  name: string;
+  addons_external_id: string;
+  billable: number;
+  invoiceId: string;
+  color: string;
+  description: string;
+  tags: TimeCampTag[];
+  hasEntryLocationHistory: boolean;
+}
+
+export interface TimeCampTag {
+  tagListName: string;
+  tagListId: string;
+  tagId: string;
+  name: string;
+  mandatory: string;
+}
+
+export interface TimeCampTimeEntriesRequest {
+  user_id?: string;
+  task_id?: string;
+  date_from?: string;
+  date_to?: string;
+  format?: string;
+}
+
+export interface TimeCampCreateTimeEntryRequest {
+  date: string;
+  duration: number; // in seconds
+  task_id?: string;
+  description?: string;
+  start_time: string;
+  end_time: string;
+}
+
+export interface TimeCampCreateTimeEntryResponse {
+  success: boolean;
+  id?: string;
+  message: string;
+}
