@@ -52,7 +52,8 @@ async function example() {
     // Get recent time entries
     const entries = await timecampApi.timeEntries.get({
       date_from: '2025-04-01',
-      date_to: '2025-04-05'
+      date_to: '2025-04-05',
+      user_ids: 'me'
     });
     console.log(`Found ${entries.length} time entries:`);
     entries.slice(0, 3).forEach(entry => {

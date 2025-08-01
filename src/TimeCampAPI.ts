@@ -199,15 +199,17 @@ export class TimeCampAPI {
 
   public get timeEntries() {
     return {
-      get: async (params: TimeCampTimeEntriesRequest = {}): Promise<TimeCampTimeEntry[]> => {
+      get: async (params: TimeCampTimeEntriesRequest): Promise<TimeCampTimeEntry[]> => {
         const queryParams: Record<string, string> = {}
         
         // Map parameters to what TimeCamp API expects
-        if (params.user_id) queryParams.user_id = params.user_id
+        if (params.user_ids) queryParams.user_ids = params.user_ids
         if (params.task_id) queryParams.task_id = params.task_id
-        if (params.date_from) queryParams.from = params.date_from
-        if (params.date_to) queryParams.to = params.date_to
-        if (params.format) queryParams.format = params.format
+        queryParams.from = params.date_from
+        queryParams.to = params.date_to
+        
+        // Always include tags in the response
+        queryParams.opt_fields = 'tags'
         
         const response = await this.makeRequest<any>('GET', 'entries', { params: queryParams })
         

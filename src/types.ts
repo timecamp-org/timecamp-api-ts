@@ -134,11 +134,10 @@ export interface TimeCampTag {
 }
 
 export interface TimeCampTimeEntriesRequest {
-  user_id?: string;
+  user_ids?: string;
   task_id?: string;
-  date_from?: string;
-  date_to?: string;
-  format?: string;
+  date_from: string;
+  date_to: string;
 }
 
 export interface TimeCampCreateTimeEntryRequest {

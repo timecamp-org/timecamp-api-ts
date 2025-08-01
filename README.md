@@ -219,7 +219,7 @@ Get time entries with optional filtering.
 
 **Parameters**:
 - `params` (optional): Filtering parameters
-  - `user_id`: Filter by user ID (optional)
+  - `user_ids`: Filter by user ID, to get only user entries use "me" (optional)
   - `task_id`: Filter by task ID (optional)
   - `date_from`: Start date in YYYY-MM-DD format (optional)
   - `date_to`: End date in YYYY-MM-DD format (optional)
@@ -321,6 +321,12 @@ Delete a time entry.
 ## API Reference
 
 Based on the [TimeCamp API documentation](https://developer.timecamp.com/).
+
+## Not Yet Implemented
+
+- Add service in config to let TimeCamp know who is making the api call
+- Rename description to note in TimeCampTimeEntry
+- Many more endpoints to be added
 
 ## License
 
