@@ -27,7 +27,7 @@ if (tasksResponse.success) {
 
 // Timer operations
 const timerStatus = await timecampApi.timer.status();
-const startedTimer = await timecampApi.timer.start({ note: "Working on project" });
+const startedTimer = await timecampApi.timer.start();
 const stoppedTimer = await timecampApi.timer.stop();
 
 // Time entries operations
