@@ -204,7 +204,7 @@ export class TimeCampAPI {
         
         // Map parameters to what TimeCamp API expects
         if (params.user_ids) queryParams.user_ids = params.user_ids
-        if (params.task_id) queryParams.task_id = params.task_id
+        if (params.task_ids) queryParams.task_ids = params.task_ids
         queryParams.from = params.date_from
         queryParams.to = params.date_to
         
@@ -224,7 +224,7 @@ export class TimeCampAPI {
                 duration: parseInt(entry.duration) || 0,
                 user_id: String(entry.user_id || ''),
                 user_name: String(entry.user_name || ''),
-                task_id: String(entry.task_id || ''),
+                task_id: parseInt(entry.task_id) || 0,
                 task_note: entry.task_note || undefined,
                 last_modify: String(entry.last_modify || ''),
                 date: String(entry.date || ''),

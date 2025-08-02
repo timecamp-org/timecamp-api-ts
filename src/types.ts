@@ -108,7 +108,7 @@ export interface TimeCampTimeEntry {
   duration: number;
   user_id: string;
   user_name: string;
-  task_id: string;
+  task_id: number;
   task_note?: string;
   last_modify: string;
   date: string;
@@ -135,7 +135,7 @@ export interface TimeCampTag {
 
 export interface TimeCampTimeEntriesRequest {
   user_ids?: string;
-  task_id?: string;
+  task_ids?: string;
   date_from: string;
   date_to: string;
 }
@@ -143,7 +143,7 @@ export interface TimeCampTimeEntriesRequest {
 export interface TimeCampCreateTimeEntryRequest {
   date: string;
   duration: number; // in seconds
-  task_id?: string;
+  task_id?: number;
   description?: string;
   start_time: string;
   end_time: string;

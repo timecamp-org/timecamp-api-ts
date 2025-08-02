@@ -24,10 +24,7 @@ async function example() {
     
     // Start a timer
     // console.log('\n▶️ Starting timer...');
-    // const startedTimer = await timecampApi.timer.start({
-    //   note: 'Testing TimeCamp API timer functionality',
-    //   task_id: undefined // You can specify a task_id if you have one
-    // });
+    // const startedTimer = await timecampApi.timer.start();
     // console.log('Timer started:', startedTimer);
     
     // // Wait for 5 seconds
@@ -51,8 +48,8 @@ async function example() {
     
     // Get recent time entries
     const entries = await timecampApi.timeEntries.get({
-      date_from: '2025-04-01',
-      date_to: '2025-04-05',
+      date_from: '2025-07-25',
+      date_to: '2025-07-31',
       user_ids: 'me'
     });
     console.log(`Found ${entries.length} time entries:`);
