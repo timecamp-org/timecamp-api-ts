@@ -20,6 +20,7 @@ import {
 export class TimeCampAPI {
   private client: AxiosInstance;
   private apiKey: string;
+  private clientName: string;
 
   constructor(apiKey: string, config?: TimeCampAPIConfig) {
     if (!apiKey) {
@@ -27,13 +28,16 @@ export class TimeCampAPI {
     }
 
     this.apiKey = apiKey;
+    this.clientName = config?.clientName || 'npm-timecamp-api';
+    
     this.client = axios.create({
       baseURL: config?.baseURL || 'https://app.timecamp.com/third_party/api',
       timeout: config?.timeout || 10000,
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'User-Agent': 'TimeCampAPI/NPM',
+        'User-Agent': this.clientName,
+        'X-Client-Name': this.clientName,
         'Authorization': `Bearer ${this.apiKey}`,
       },
     });
@@ -111,7 +115,8 @@ export class TimeCampAPI {
           const payload: TimerActionRequest = {
             action: 'start',
             task_id: data?.task_id,
-            started_at: data?.started_at || this.formatTimeCampDate()
+            started_at: data?.started_at || this.formatTimeCampDate(),
+            service: this.clientName
           };
           const response: AxiosResponse<any> = await this.client.post('/timer', payload);
           return response.data;
@@ -127,7 +132,8 @@ export class TimeCampAPI {
         try {
           const payload: TimerActionRequest = {
             action: 'stop',
-            stopped_at: data?.stopped_at || this.formatTimeCampDate()
+            stopped_at: data?.stopped_at || this.formatTimeCampDate(),
+            service: this.clientName
           };
           const response: AxiosResponse<any> = await this.client.post('/timer', payload);
           return response.data;
@@ -142,7 +148,8 @@ export class TimeCampAPI {
       status: async (): Promise<any> => {
         try {
           const payload: TimerActionRequest = {
-            action: 'status'
+            action: 'status',
+            service: this.clientName
           };
           const response: AxiosResponse<any> = await this.client.post('/timer', payload);
           return response.data;
@@ -262,7 +269,7 @@ export class TimeCampAPI {
             description: entry.description || '',
             start_time: entry.start_time,
             end_time: entry.end_time,
-            service: 'timecamp-jwt-plugin'
+            service: this.clientName
           };
           
           // Only include task_id if it's provided and not null/undefined
@@ -291,7 +298,8 @@ export class TimeCampAPI {
         try {
           // Only include fields that are actually provided (not undefined)
           const updateData: any = {
-            id: id.toString()
+            id: id.toString(),
+            service: this.clientName
           }
           
           if (entry.date !== undefined) updateData.date = entry.date
@@ -321,7 +329,7 @@ export class TimeCampAPI {
       delete: async (id: number): Promise<{ success: boolean; message: string }> => {
         try {
           await this.makeRequest<any>('DELETE', 'entries', {
-            json: { id: id.toString() }
+            json: { id: id.toString(), service: this.clientName }
           })
           
           return {

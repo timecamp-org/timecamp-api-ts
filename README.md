@@ -15,6 +15,12 @@ import { TimeCampAPI } from 'timecamp-api';
 
 const timecampApi = new TimeCampAPI("your-api-key");
 
+// With custom configuration
+const timecampApi = new TimeCampAPI("your-api-key", {
+  clientName: 'my-awesome-app',
+  timeout: 15000
+});
+
 // Get current user
 const user = await timecampApi.user.get();
 console.log(user);
@@ -324,7 +330,6 @@ Based on the [TimeCamp API documentation](https://developer.timecamp.com/).
 
 ## Not Yet Implemented
 
-- Add service in config to let TimeCamp know who is making the api call
 - Rename description to note in TimeCampTimeEntry
 - Many more endpoints to be added
 

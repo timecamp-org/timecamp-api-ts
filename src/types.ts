@@ -10,6 +10,7 @@ export interface TimeCampUser {
 export interface TimeCampAPIConfig {
   baseURL?: string;
   timeout?: number;
+  clientName?: string;
 }
 
 export interface TimeCampAPIResponse<T> {
@@ -31,6 +32,7 @@ export interface TimerActionRequest {
   task_id?: number;
   started_at?: string;
   stopped_at?: string;
+  service?: string;
 }
 
 export interface TimerEntry {
