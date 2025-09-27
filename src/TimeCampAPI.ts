@@ -109,24 +109,87 @@ export class TimeCampAPI {
            String(d.getSeconds()).padStart(2, '0');
   }
 
-  private async resolveUserParam(user?: string): Promise<{ userParam: string; isCurrentUser: boolean }> {
+  private async resolveUserParam(user?: string): Promise<{ isCurrentUser: boolean; targetUserId?: string }> {
     const requestedUser = user ?? 'me';
 
     if (requestedUser === 'me') {
-      return { userParam: 'me', isCurrentUser: true };
+      return { isCurrentUser: true };
     }
 
     if (!/^\d+$/.test(requestedUser)) {
-      return { userParam: requestedUser, isCurrentUser: false };
+      return { isCurrentUser: false, targetUserId: requestedUser };
     }
 
     const currentUser = await this.user.get();
 
     if (currentUser.user_id === requestedUser) {
-      return { userParam: 'me', isCurrentUser: true };
+      return { isCurrentUser: true, targetUserId: currentUser.user_id };
     }
 
-    return { userParam: requestedUser, isCurrentUser: false };
+    return { isCurrentUser: false, targetUserId: requestedUser };
+  }
+
+  private buildTasksRequestParams(isCurrentUser: boolean): Record<string, string> {
+    const params: Record<string, string> = {};
+
+    if (isCurrentUser) {
+      params.ignoreAdminRights = '1';
+    }
+
+    return params;
+  }
+
+  private userHasAccessInTaskHierarchy(
+    task: TimeCampTask | undefined,
+    taskMap: TimeCampTasksResponse,
+    userId: string,
+    visited: Set<number> = new Set()
+  ): boolean {
+    if (!task) {
+      return false;
+    }
+
+    if (visited.has(task.task_id)) {
+      return false;
+    }
+
+    visited.add(task.task_id);
+
+    if (task.users && task.users[userId]) {
+      return true;
+    }
+
+    const parentId = task.parent_id;
+
+    if (!parentId || parentId === 0) {
+      return false;
+    }
+
+    const parentTask = taskMap[String(parentId)];
+
+    if (!parentTask) {
+      return false;
+    }
+
+    return this.userHasAccessInTaskHierarchy(parentTask, taskMap, userId, visited);
+  }
+
+  private determineCanTrackTime(
+    task: TimeCampTask,
+    taskMap: TimeCampTasksResponse,
+    options: { isCurrentUser: boolean; targetUserId?: string }
+  ): boolean {
+    const { isCurrentUser, targetUserId } = options;
+
+    if (isCurrentUser) {
+      return task.user_access_type === 2 || task.user_access_type === 3;
+    }
+
+    if (!targetUserId) {
+      return false;
+    }
+
+    return this.userHasAccessInTaskHierarchy(task, taskMap, targetUserId);
   }
 
   public get timer() {
@@ -189,11 +252,9 @@ export class TimeCampAPI {
       getActiveUserTasks: async (options: GetActiveUserTasksOptions = {}): Promise<TasksAPIResponse> => {
         try {
           const { includeFullBreadcrumb = true } = options;
-          const { userParam, isCurrentUser } = await this.resolveUserParam(options.user);
+          const { isCurrentUser, targetUserId } = await this.resolveUserParam(options.user);
 
-          const params: Record<string, string> = {
-            ignoreAdminRights: '1',
-          };
+          const params = this.buildTasksRequestParams(isCurrentUser);
 
           // Make API request with ignoreAdminRights parameter
           const response: AxiosResponse<TimeCampTasksResponse> = await this.client.get('/tasks', {
@@ -213,8 +274,17 @@ export class TimeCampAPI {
             const { tags, ...taskWithoutTags } = task;
             const normalizedTask = taskWithoutTags as TimeCampTask;
 
-            if (isCurrentUser) {
-              normalizedTask.canTrackTime = task.user_access_type === 2 || task.user_access_type === 3;
+            const canTrack = this.determineCanTrackTime(normalizedTask, response.data, {
+              isCurrentUser,
+              targetUserId
+            });
+
+            if (!includeFullBreadcrumb && !canTrack) {
+              return acc;
+            }
+
+            if (includeFullBreadcrumb || canTrack) {
+              normalizedTask.canTrackTime = canTrack;
             }
 
             acc.push(normalizedTask);
