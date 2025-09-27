@@ -34,6 +34,12 @@ if (tasksResponse.success) {
   console.log(tasksResponse.data); // Array of non-archived tasks
 }
 
+// Get all tasks including archived ones
+const allTasksResponse = await timecampApi.tasks.getAll();
+if (allTasksResponse.success) {
+  console.log(allTasksResponse.data); // Active + archived tasks
+}
+
 // Timer operations
 const timerStatus = await timecampApi.timer.status();
 const startedTimer = await timecampApi.timer.start();
@@ -79,6 +85,7 @@ new TimeCampAPI(apiKey: string, config?: TimeCampAPIConfig)
 | Method | Description | Parameters | Returns |
 |--------|-------------|------------|---------|
 | `user.get()` | Get information about the current user | None | `Promise<TimeCampUser>` |
+| `tasks.getAll()` | Get every task including archived | None | `Promise<TasksAPIResponse>` |
 | `tasks.getActiveUserTasks(options?: GetActiveUserTasksOptions)` | Get all non-archived tasks | `options`: `{ user?: string; includeFullBreadcrumb?: boolean; }` | `Promise<TasksAPIResponse>` |
 | `timer.start()` | Start a new timer | `data?: TimerStartRequest` | `Promise<any>` |
 | `timer.stop()` | Stop the currently running timer | `data?: TimerStopRequest` | `Promise<any>` |
@@ -159,6 +166,12 @@ interface TimeCampTask {
   [key: string]: any;
 }
 ```
+
+#### `tasks.getAll()`
+
+Fetch every task visible to the authenticated account, including archived tasks.
+
+**Returns**: `Promise<TasksAPIResponse>`
 
 #### `timer.start(data?: TimerStartRequest)`
 

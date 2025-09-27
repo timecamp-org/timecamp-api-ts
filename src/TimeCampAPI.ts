@@ -14,7 +14,8 @@ import {
   TimeCampTimeEntriesRequest,
   TimeCampCreateTimeEntryRequest,
   TimeCampCreateTimeEntryResponse,
-  GetActiveUserTasksOptions
+  GetActiveUserTasksOptions,
+  TimeCampTask
 } from './types';
 import { prepareTasksArray } from './taskFilters';
 
@@ -196,6 +197,39 @@ export class TimeCampAPI {
 
   public get tasks() {
     return {
+      getAll: async (): Promise<TasksAPIResponse> => {
+        try {
+          const response: AxiosResponse<TimeCampTasksResponse> = await this.client.get('/tasks', {
+            params: {
+              status: 'all'
+            }
+          });
+
+          const tasksArray = Object.values(response.data).map((task: any) => {
+            const { tags, ...taskWithoutTags } = task;
+            return taskWithoutTags as TimeCampTask;
+          });
+
+          return {
+            success: true,
+            data: tasksArray,
+            message: 'All tasks fetched successfully'
+          };
+        } catch (error) {
+          console.error('Error fetching all tasks:', error);
+          if (axios.isAxiosError(error)) {
+            return {
+              success: false,
+              error: `TimeCamp API error: ${error.response?.status} - ${JSON.stringify(error.response?.data)}`
+            };
+          }
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          };
+        }
+      },
+
       getActiveUserTasks: async (options: GetActiveUserTasksOptions = {}): Promise<TasksAPIResponse> => {
         try {
           const { includeFullBreadcrumb = true } = options;
