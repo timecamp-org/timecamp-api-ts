@@ -91,7 +91,13 @@ export interface TimeCampTask {
     [permId: string]: number;
   };
   // Additional fields
+  canTrackTime?: boolean;
   [key: string]: any;
+}
+
+export interface GetActiveUserTasksOptions {
+  user?: string;
+  includeFullBreadcrumb?: boolean;
 }
 
 export interface TimeCampTasksResponse {

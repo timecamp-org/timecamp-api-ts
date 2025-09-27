@@ -14,7 +14,8 @@ import {
   TimeCampTimeEntry,
   TimeCampTimeEntriesRequest,
   TimeCampCreateTimeEntryRequest,
-  TimeCampCreateTimeEntryResponse
+  TimeCampCreateTimeEntryResponse,
+  GetActiveUserTasksOptions
 } from './types';
 
 export class TimeCampAPI {
@@ -108,6 +109,26 @@ export class TimeCampAPI {
            String(d.getSeconds()).padStart(2, '0');
   }
 
+  private async resolveUserParam(user?: string): Promise<{ userParam: string; isCurrentUser: boolean }> {
+    const requestedUser = user ?? 'me';
+
+    if (requestedUser === 'me') {
+      return { userParam: 'me', isCurrentUser: true };
+    }
+
+    if (!/^\d+$/.test(requestedUser)) {
+      return { userParam: requestedUser, isCurrentUser: false };
+    }
+
+    const currentUser = await this.user.get();
+
+    if (currentUser.user_id === requestedUser) {
+      return { userParam: 'me', isCurrentUser: true };
+    }
+
+    return { userParam: requestedUser, isCurrentUser: false };
+  }
+
   public get timer() {
     return {
       start: async (data?: TimerStartRequest): Promise<any> => {
@@ -165,22 +186,40 @@ export class TimeCampAPI {
 
   public get tasks() {
     return {
-      getActiveUserTasks: async (): Promise<TasksAPIResponse> => {
+      getActiveUserTasks: async (options: GetActiveUserTasksOptions = {}): Promise<TasksAPIResponse> => {
         try {
+          const { includeFullBreadcrumb = true } = options;
+          const { userParam, isCurrentUser } = await this.resolveUserParam(options.user);
+
+          const params: Record<string, string> = {
+            ignoreAdminRights: '1',
+          };
+
           // Make API request with ignoreAdminRights parameter
           const response: AxiosResponse<TimeCampTasksResponse> = await this.client.get('/tasks', {
-            params: {
-              ignoreAdminRights: "1"
-            }
+            params
           });
 
           // Convert object to array, filter non-archived tasks, and remove tags field
-          const tasksArray: TimeCampTask[] = Object.values(response.data)
-            .filter((task: any) => task.archived === 0)
-            .map((task: any) => {
-              const { tags, ...taskWithoutTags } = task;
-              return taskWithoutTags as TimeCampTask;
-            });
+          const tasksArray: TimeCampTask[] = Object.values(response.data).reduce<TimeCampTask[]>((acc, task: any) => {
+            if (task.archived !== 0) {
+              return acc;
+            }
+
+            if (isCurrentUser && !includeFullBreadcrumb && (task.user_access_type !== 2 && task.user_access_type !== 3)) {
+              return acc;
+            }
+
+            const { tags, ...taskWithoutTags } = task;
+            const normalizedTask = taskWithoutTags as TimeCampTask;
+
+            if (isCurrentUser) {
+              normalizedTask.canTrackTime = task.user_access_type === 2 || task.user_access_type === 3;
+            }
+
+            acc.push(normalizedTask);
+            return acc;
+          }, []);
 
           return {
             success: true,

@@ -26,7 +26,10 @@ const user = await timecampApi.user.get();
 console.log(user);
 
 // Get tasks
-const tasksResponse = await timecampApi.tasks.getActiveUserTasks();
+const tasksResponse = await timecampApi.tasks.getActiveUserTasks({
+  user: 'me',
+  includeFullBreadcrumb: true
+});
 if (tasksResponse.success) {
   console.log(tasksResponse.data); // Array of non-archived tasks
 }
@@ -76,7 +79,7 @@ new TimeCampAPI(apiKey: string, config?: TimeCampAPIConfig)
 | Method | Description | Parameters | Returns |
 |--------|-------------|------------|---------|
 | `user.get()` | Get information about the current user | None | `Promise<TimeCampUser>` |
-| `tasks.getActiveUserTasks()` | Get all non-archived tasks | None | `Promise<TasksAPIResponse>` |
+| `tasks.getActiveUserTasks(options?: GetActiveUserTasksOptions)` | Get all non-archived tasks | `options`: `{ user?: string; includeFullBreadcrumb?: boolean; }` | `Promise<TasksAPIResponse>` |
 | `timer.start()` | Start a new timer | `data?: TimerStartRequest` | `Promise<any>` |
 | `timer.stop()` | Stop the currently running timer | `data?: TimerStopRequest` | `Promise<any>` |
 | `timer.status()` | Get the current timer status | None | `Promise<any>` |
@@ -102,9 +105,13 @@ interface TimeCampUser {
 }
 ```
 
-#### `tasks.getActiveUserTasks()`
+#### `tasks.getActiveUserTasks(options?: GetActiveUserTasksOptions)`
 
-Get all non-archived tasks accessible to the current user.
+Get all non-archived tasks accessible to a user.
+
+**Parameters**:
+- `options.user` (optional): Defaults to `'me'`. Pass a numerical user ID string to fetch tasks for a different user.
+- `options.includeFullBreadcrumb` (optional): Defaults to `true`. Controls whether full breadcrumb information is included in the API response.
 
 **Returns**: `Promise<TasksAPIResponse>`
 
@@ -148,6 +155,7 @@ interface TimeCampTask {
   perms?: {
     [permId: string]: number;
   };
+  canTrackTime?: boolean;
   [key: string]: any;
 }
 ```
