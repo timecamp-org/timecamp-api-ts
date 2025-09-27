@@ -1,14 +1,13 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import { 
-  TimeCampUser, 
-  TimeCampAPIConfig, 
-  TimeCampAPIResponse, 
-  TimerStartRequest, 
-  TimerStopRequest, 
-  TimerEntry, 
+import {
+  TimeCampUser,
+  TimeCampAPIConfig,
+  TimeCampAPIResponse,
+  TimerStartRequest,
+  TimerStopRequest,
+  TimerEntry,
   TimerStatus,
   TimerActionRequest,
-  TimeCampTask,
   TimeCampTasksResponse,
   TasksAPIResponse,
   TimeCampTimeEntry,
@@ -17,6 +16,7 @@ import {
   TimeCampCreateTimeEntryResponse,
   GetActiveUserTasksOptions
 } from './types';
+import { prepareTasksArray } from './taskFilters';
 
 export class TimeCampAPI {
   private client: AxiosInstance;
@@ -139,59 +139,6 @@ export class TimeCampAPI {
     return params;
   }
 
-  private userHasAccessInTaskHierarchy(
-    task: TimeCampTask | undefined,
-    taskMap: TimeCampTasksResponse,
-    userId: string,
-    visited: Set<number> = new Set()
-  ): boolean {
-    if (!task) {
-      return false;
-    }
-
-    if (visited.has(task.task_id)) {
-      return false;
-    }
-
-    visited.add(task.task_id);
-
-    if (task.users && task.users[userId]) {
-      return true;
-    }
-
-    const parentId = task.parent_id;
-
-    if (!parentId || parentId === 0) {
-      return false;
-    }
-
-    const parentTask = taskMap[String(parentId)];
-
-    if (!parentTask) {
-      return false;
-    }
-
-    return this.userHasAccessInTaskHierarchy(parentTask, taskMap, userId, visited);
-  }
-
-  private determineCanTrackTime(
-    task: TimeCampTask,
-    taskMap: TimeCampTasksResponse,
-    options: { isCurrentUser: boolean; targetUserId?: string }
-  ): boolean {
-    const { isCurrentUser, targetUserId } = options;
-
-    if (isCurrentUser) {
-      return task.user_access_type === 2 || task.user_access_type === 3;
-    }
-
-    if (!targetUserId) {
-      return false;
-    }
-
-    return this.userHasAccessInTaskHierarchy(task, taskMap, targetUserId);
-  }
-
   public get timer() {
     return {
       start: async (data?: TimerStartRequest): Promise<any> => {
@@ -261,35 +208,11 @@ export class TimeCampAPI {
             params
           });
 
-          // Convert object to array, filter non-archived tasks, and remove tags field
-          const tasksArray: TimeCampTask[] = Object.values(response.data).reduce<TimeCampTask[]>((acc, task: any) => {
-            if (task.archived !== 0) {
-              return acc;
-            }
-
-            if (isCurrentUser && !includeFullBreadcrumb && (task.user_access_type !== 2 && task.user_access_type !== 3)) {
-              return acc;
-            }
-
-            const { tags, ...taskWithoutTags } = task;
-            const normalizedTask = taskWithoutTags as TimeCampTask;
-
-            const canTrack = this.determineCanTrackTime(normalizedTask, response.data, {
-              isCurrentUser,
-              targetUserId
-            });
-
-            if (!includeFullBreadcrumb && !canTrack) {
-              return acc;
-            }
-
-            if (includeFullBreadcrumb || canTrack) {
-              normalizedTask.canTrackTime = canTrack;
-            }
-
-            acc.push(normalizedTask);
-            return acc;
-          }, []);
+          const tasksArray = prepareTasksArray(response.data, {
+            includeFullBreadcrumb,
+            isCurrentUser,
+            targetUserId
+          });
 
           return {
             success: true,
