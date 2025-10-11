@@ -162,3 +162,55 @@ export interface TimeCampCreateTimeEntryResponse {
   id?: string;
   message: string;
 }
+
+// Custom Fields (v3) types
+export type TimeCampCustomFieldResourceType = 'user' | 'task' | 'entry';
+
+export interface TimeCampCustomFieldTemplate {
+  id: number;
+  name: string;
+  resourceType: TimeCampCustomFieldResourceType;
+  required: boolean;
+  status: number;
+  fieldType: string;
+  defaultValue: string | null;
+  fieldOptions: Record<string, any>[] | null;
+}
+
+export interface TimeCampCustomFieldAssignment {
+  id: number;
+  resourceId: number;
+  resourceType: TimeCampCustomFieldResourceType;
+  required: boolean;
+  value: string;
+  fieldType: string;
+  startDate: string;
+  endDate: string | null;
+  createdBy: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TimeCampCustomFieldValueSummary {
+  templateId: number;
+  name: string;
+  resourceType: TimeCampCustomFieldResourceType;
+  required: boolean;
+  fieldType: string;
+  defaultValue: string | null;
+  value: string;
+}
+
+export interface TimeCampCustomFieldTemplatesResponse {
+  data: TimeCampCustomFieldTemplate[];
+}
+
+export interface TimeCampCustomFieldAssignmentResponse {
+  data: TimeCampCustomFieldAssignment;
+}
+
+export interface TimeCampCustomFieldValuesResponse {
+  data: TimeCampCustomFieldValueSummary[];
+}
+
+export type TimeCampUsersMapResponse = Record<string, any>;

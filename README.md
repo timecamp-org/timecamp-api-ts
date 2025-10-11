@@ -85,6 +85,13 @@ new TimeCampAPI(apiKey: string, config?: TimeCampAPIConfig)
 | Method | Description | Parameters | Returns |
 |--------|-------------|------------|---------|
 | `user.get()` | Get information about the current user | None | `Promise<TimeCampUser>` |
+| `users.getAll()` | Get all users | None | `Promise<Record<string, any>>` |
+| `users.byId(id)` | Chainable selector for a user resource | `id: number` | `{ getAllCustomFields, getCustomField, setCustomField, updateCustomField, deleteCustomField }` |
+| `tasks.byId(id)` | Chainable selector for a task resource | `id: number` | `{ getAllCustomFields, getCustomField, setCustomField, updateCustomField, deleteCustomField }` |
+| `timeEntries.byId(id)` | Chainable selector for a time entry resource | `id: number` | `{ getAllCustomFields, getCustomField, setCustomField, updateCustomField, deleteCustomField }` |
+| `customFields.getAll()` | List all custom fields templates (v3) | None | `Promise<{ data: TimeCampCustomFieldTemplate[] }>` |
+| `customFields.add(payload)` | Create a custom field template (v3) | `{ name, resourceType, fieldType, required?, status?, defaultValue?, fieldOptions? }` | `Promise<{ data: TimeCampCustomFieldTemplate }>` |
+| `customFields.delete(templateId)` | Remove a custom field template (v3) | `templateId: number` | `Promise<{ data: string }>` |
 | `tasks.getAll()` | Get every task including archived | None | `Promise<TasksAPIResponse>` |
 | `tasks.getActiveUserTasks(options?: GetActiveUserTasksOptions)` | Get all non-archived tasks | `options`: `{ user?: string; includeFullBreadcrumb?: boolean; }` | `Promise<TasksAPIResponse>` |
 | `timer.start()` | Start a new timer | `data?: TimerStartRequest` | `Promise<any>` |
@@ -168,6 +175,48 @@ interface TimeCampTask {
 ```
 
 #### `tasks.getAll()`
+#### `users.getAll()`
+
+List all users visible to the authenticated account.
+
+Returns: `Promise<Record<string, any>>`
+
+#### Custom Fields (v3)
+
+Convenience helpers to manage Custom Fields for users, tasks and time entries.
+
+```typescript
+// List all templates
+const templates = await timecampApi.customFields.getAll()
+
+// Create and delete a template
+const created = await timecampApi.customFields.add({
+  name: 'Customer Priority',
+  resourceType: 'user',
+  fieldType: 'string',
+  required: false,
+  defaultValue: ''
+})
+await timecampApi.customFields.delete(created.data.id)
+
+// Users
+await timecampApi.users.getAll()
+await timecampApi.users.byId(123).getAllCustomFields()
+await timecampApi.users.byId(123).getCustomField(66)
+await timecampApi.users.byId(123).setCustomField(66, 'In Progress')
+await timecampApi.users.byId(123).updateCustomField(66, 'Done')
+await timecampApi.users.byId(123).deleteCustomField(66)
+
+// Tasks
+await timecampApi.tasks.byId(456).getAllCustomFields()
+await timecampApi.tasks.byId(456).getCustomField(66)
+await timecampApi.tasks.byId(456).setCustomField(66, '5')
+await timecampApi.tasks.byId(456).deleteCustomField(66)
+
+// Time Entries
+await timecampApi.timeEntries.byId(789).getAllCustomFields()
+```
+
 
 Fetch every task visible to the authenticated account, including archived tasks.
 

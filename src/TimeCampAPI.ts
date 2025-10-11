@@ -15,7 +15,12 @@ import {
   TimeCampCreateTimeEntryRequest,
   TimeCampCreateTimeEntryResponse,
   GetActiveUserTasksOptions,
-  TimeCampTask
+  TimeCampTask,
+  TimeCampCustomFieldTemplatesResponse,
+  TimeCampCustomFieldAssignmentResponse,
+  TimeCampCustomFieldValuesResponse,
+  TimeCampCustomFieldResourceType,
+  TimeCampUsersMapResponse
 } from './types';
 import { prepareTasksArray } from './taskFilters';
 
@@ -140,6 +145,42 @@ export class TimeCampAPI {
     return params;
   }
 
+  private buildV3Endpoint(path: string): string {
+    // v3 endpoints live under /v3 on the same host; default baseURL is /third_party/api
+    // We assume appending /v3 to the third_party base is acceptable in this environment
+    return `v3/${path.replace(/^\//, '')}`;
+  }
+
+  private resourceCustomFields(resourceType: TimeCampCustomFieldResourceType, resourceId: number) {
+    return {
+      getAllCustomFields: async (): Promise<TimeCampCustomFieldValuesResponse> => {
+        const endpoint = this.buildV3Endpoint(`custom-fields/values/resource/${resourceId}/type/${resourceType}`);
+        return this.makeRequest<TimeCampCustomFieldValuesResponse>('GET', endpoint);
+      },
+
+      getCustomField: async (customFieldId: number): Promise<TimeCampCustomFieldAssignmentResponse> => {
+        const endpoint = this.buildV3Endpoint(`custom-fields/${customFieldId}/value/${resourceId}`);
+        return this.makeRequest<TimeCampCustomFieldAssignmentResponse>('GET', endpoint);
+      },
+
+      setCustomField: async (customFieldId: number, value: string): Promise<TimeCampCustomFieldAssignmentResponse> => {
+        const endpoint = this.buildV3Endpoint(`custom-fields/${customFieldId}/assign/${resourceId}`);
+        return this.makeRequest<TimeCampCustomFieldAssignmentResponse>('POST', endpoint, { json: { value } });
+      },
+
+      updateCustomField: async (customFieldId: number, value: string): Promise<TimeCampCustomFieldAssignmentResponse> => {
+        // Assign again to update value
+        const endpoint = this.buildV3Endpoint(`custom-fields/${customFieldId}/assign/${resourceId}`);
+        return this.makeRequest<TimeCampCustomFieldAssignmentResponse>('POST', endpoint, { json: { value } });
+      },
+
+      deleteCustomField: async (customFieldId: number): Promise<{ data: string }> => {
+        const endpoint = this.buildV3Endpoint(`custom-fields/${customFieldId}/unassign/${resourceId}`);
+        return this.makeRequest<{ data: string }>('DELETE', endpoint);
+      }
+    };
+  }
+
   public get timer() {
     return {
       start: async (data?: TimerStartRequest): Promise<any> => {
@@ -195,8 +236,63 @@ export class TimeCampAPI {
     };
   }
 
+  public get customFields() {
+    return {
+      getAll: async (): Promise<TimeCampCustomFieldTemplatesResponse> => {
+        const endpoint = this.buildV3Endpoint('custom-fields/template/list');
+        return this.makeRequest<TimeCampCustomFieldTemplatesResponse>('GET', endpoint);
+      },
+      add: async (payload: { name: string; resourceType: TimeCampCustomFieldResourceType; fieldType: 'number' | 'string'; required?: boolean; status?: number; defaultValue?: string | null; fieldOptions?: Record<string, any>[] | null; }): Promise<{ data: any }> => {
+        const endpoint = this.buildV3Endpoint('custom-fields/template/create');
+        return this.makeRequest<{ data: any }>('POST', endpoint, { json: payload });
+      },
+      update: async (templateId: number, payload: { name?: string; required?: boolean; status?: number; defaultValue?: string | null; fieldOptions?: Record<string, any>[] | null; }): Promise<{ data: any }> => {
+        const endpoint = this.buildV3Endpoint(`custom-fields/template/${templateId}/modify`);
+        return this.makeRequest<{ data: any }>('PUT', endpoint, { json: payload });
+      },
+      delete: async (templateId: number): Promise<{ data: string }> => {
+        const endpoint = this.buildV3Endpoint(`custom-fields/template/${templateId}/remove`);
+        return this.makeRequest<{ data: string }>('DELETE', endpoint);
+      }
+    };
+  }
+
+  public get users() {
+    const self = this;
+    const api = {
+      getAll: async (): Promise<TimeCampUsersMapResponse> => {
+        // Legacy users listing endpoint under third_party
+        return self.makeRequest<TimeCampUsersMapResponse>('GET', 'users');
+      },
+      getAllWithCustomFields: async (): Promise<any[]> => {
+        const usersResponse: any = await self.makeRequest<any>('GET', 'users');
+        const usersArray: any[] = Array.isArray(usersResponse)
+          ? usersResponse
+          : Object.values(usersResponse || {});
+
+        const enriched = await Promise.all(
+          usersArray.map(async (user: any) => {
+            const numericId = typeof user?.id === 'number'
+              ? user.id
+              : parseInt(user?.user_id ?? user?.userId ?? user?.userID ?? user?.uid ?? '0', 10);
+            const id = Number.isFinite(numericId) && numericId > 0 ? numericId : parseInt(String(user?.id ?? 0), 10);
+
+            const endpoint = self.buildV3Endpoint(`custom-fields/values/resource/${id}/type/user`);
+            const values = await self.makeRequest<TimeCampCustomFieldValuesResponse>('GET', endpoint);
+            return { ...user, id, customFields: values.data };
+          })
+        );
+
+        return enriched;
+      },
+      byId: (id: number) => self.resourceCustomFields('user', id)
+    } as const;
+    return api;
+  }
+
   public get tasks() {
     return {
+      byId: (id: number) => this.resourceCustomFields('task', id),
       getAll: async (): Promise<TasksAPIResponse> => {
         try {
           const response: AxiosResponse<TimeCampTasksResponse> = await this.client.get('/tasks', {
@@ -272,6 +368,7 @@ export class TimeCampAPI {
 
   public get timeEntries() {
     return {
+      byId: (id: number) => this.resourceCustomFields('entry', id),
       get: async (params: TimeCampTimeEntriesRequest): Promise<TimeCampTimeEntry[]> => {
         const queryParams: Record<string, string> = {}
         
