@@ -6,8 +6,10 @@ import {
   TimerStartRequest,
   TimerStopRequest,
   TimerEntry,
-  TimerStatus,
   TimerActionRequest,
+  TimerStatusResponse,
+  TimerStartResponse,
+  TimerStopResponse,
   TimeCampTasksResponse,
   TasksAPIResponse,
   TimeCampTimeEntry,
@@ -185,7 +187,7 @@ export class TimeCampAPI {
 
   public get timer() {
     return {
-      start: async (data?: TimerStartRequest): Promise<any> => {
+      start: async (data?: TimerStartRequest): Promise<TimerStartResponse> => {
         try {
           const payload: TimerActionRequest = {
             action: 'start',
@@ -193,7 +195,7 @@ export class TimeCampAPI {
             started_at: data?.started_at || this.formatTimeCampDate(),
             service: this.clientName
           };
-          const response: AxiosResponse<any> = await this.client.post('/timer', payload);
+          const response: AxiosResponse<TimerStartResponse> = await this.client.post('/timer', payload);
           return response.data;
         } catch (error) {
           if (axios.isAxiosError(error)) {
@@ -203,14 +205,14 @@ export class TimeCampAPI {
         }
       },
 
-      stop: async (data?: TimerStopRequest): Promise<any> => {
+      stop: async (data?: TimerStopRequest): Promise<TimerStopResponse> => {
         try {
           const payload: TimerActionRequest = {
             action: 'stop',
             stopped_at: data?.stopped_at || this.formatTimeCampDate(),
             service: this.clientName
           };
-          const response: AxiosResponse<any> = await this.client.post('/timer', payload);
+          const response: AxiosResponse<TimerStopResponse> = await this.client.post('/timer', payload);
           return response.data;
         } catch (error) {
           if (axios.isAxiosError(error)) {
@@ -220,13 +222,13 @@ export class TimeCampAPI {
         }
       },
 
-      status: async (): Promise<any> => {
+      status: async (): Promise<TimerStatusResponse> => {
         try {
           const payload: TimerActionRequest = {
             action: 'status',
             service: this.clientName
           };
-          const response: AxiosResponse<any> = await this.client.post('/timer', payload);
+          const response: AxiosResponse<TimerStatusResponse> = await this.client.post('/timer', payload);
           return response.data;
         } catch (error) {
           if (axios.isAxiosError(error)) {

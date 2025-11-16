@@ -50,12 +50,35 @@ export interface TimerEntry {
   approved: boolean;
 }
 
-export interface TimerStatus {
-  timer_id?: number;
-  task_id?: number;
-  start_time?: string;
-  running: boolean;
-  duration?: number;
+export interface TimerStatusRunning {
+  isTimerRunning: true;
+  elapsed: number;
+  entry_id: string;
+  timer_id: string;
+  start_time: string;
+  browser_plugin_button_hash: string;
+  note: string;
+}
+
+export interface TimerStatusStopped {
+  isTimerRunning: false;
+  elapsed: number;
+}
+
+export type TimerStatusResponse = TimerStatusRunning | TimerStatusStopped;
+
+export interface TimerStartResponse {
+  new_timer_id: number;
+  entry_id: number;
+  name: string;
+  external_task_id: false | string;
+  note: string | null;
+}
+
+export interface TimerStopResponse {
+  elapsed: number;
+  entry_id: string;
+  entry_time: number;
 }
 
 export interface TimeCampTask {

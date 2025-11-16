@@ -27,32 +27,32 @@ async function example() {
     console.log('Favourites:', favourites.data.favourites);
 
     // Remove a favourite task
-    const removeFavouriteResult = await timecampApi.tasks.removeFavorite(77390460);
-    console.log('Remove favourite result:', removeFavouriteResult);
+    // const removeFavouriteResult = await timecampApi.tasks.removeFavorite(77390460);
+    // console.log('Remove favourite result:', removeFavouriteResult);
 
     // Start a timer
-    // console.log('\n▶️ Starting timer...');
-    // const startedTimer = await timecampApi.timer.start();
-    // console.log('Timer started:', startedTimer);
+    console.log('\n▶️ Starting timer...');
+    const startedTimer = await timecampApi.timer.start();
+    console.log('Timer started:', startedTimer);
     
     // // Wait for 5 seconds
-    // console.log('\n⏳ Waiting 5 seconds...');
-    // await new Promise(resolve => setTimeout(resolve, 5000));
+    console.log('\n⏳ Waiting 5 seconds...');
+    await new Promise(resolve => setTimeout(resolve, 5000));
     
     // // Check timer status again
-    // console.log('\n📊 Checking timer status after start...');
-    // const runningStatus = await timecampApi.timer.status();
-    // console.log('Running timer status:', runningStatus);
+    console.log('\n📊 Checking timer status after start...');
+    const runningStatus = await timecampApi.timer.status();
+    console.log('Running timer status:', runningStatus);
     
     // // Stop the timer
-    // console.log('\n⏹️ Stopping timer...');
-    // const stoppedTimer = await timecampApi.timer.stop();
-    // console.log('Timer stopped:', stoppedTimer);
+    console.log('\n⏹️ Stopping timer...');
+    const stoppedTimer = await timecampApi.timer.stop();
+    console.log('Timer stopped:', stoppedTimer);
     
     // // Final status check
-    // console.log('\n📊 Final timer status...');
-    // const finalStatus = await timecampApi.timer.status();
-    // console.log('Final timer status:', finalStatus);
+    console.log('\n📊 Final timer status...');
+    const finalStatus = await timecampApi.timer.status();
+    console.log('Final timer status:', finalStatus);
     
     // Get recent time entries
     const entries = await timecampApi.timeEntries.get({
