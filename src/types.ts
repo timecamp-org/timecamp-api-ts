@@ -52,12 +52,16 @@ export interface TimerEntry {
 
 export interface TimerStatusRunning {
   isTimerRunning: true;
-  elapsed: number;
-  entry_id: string;
-  timer_id: string;
-  start_time: string;
+  elapsed: number; // in seconds
+  entry_id: string; // can be converted to number
+  timer_id: string; // can be converted to number
+  start_time: string; //format like '2025-11-16 19:06:00'
   browser_plugin_button_hash: string;
   note: string;
+  task_id?: string; // can be converted to number
+  name?: string; // task name if available
+  external_task_id?: string;
+  billable?: number; // 0 or 1
 }
 
 export interface TimerStatusStopped {
