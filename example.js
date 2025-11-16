@@ -21,7 +21,15 @@ async function example() {
     // Check current timer status
     const initialStatus = await timecampApi.timer.status();
     console.log('Initial timer status:', initialStatus);
-    
+
+    // Get favourite tasks for the task picker widget
+    const favourites = await timecampApi.tasks.getFavorites();
+    console.log('Favourites:', favourites.data.favourites);
+
+    // Remove a favourite task
+    const removeFavouriteResult = await timecampApi.tasks.removeFavorite(77390460);
+    console.log('Remove favourite result:', removeFavouriteResult);
+
     // Start a timer
     // console.log('\n▶️ Starting timer...');
     // const startedTimer = await timecampApi.timer.start();

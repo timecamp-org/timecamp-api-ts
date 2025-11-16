@@ -95,6 +95,47 @@ export interface TimeCampTask {
   [key: string]: any;
 }
 
+export interface TimeCampTaskPickerItem {
+  taskId: number;
+  name: string;
+  parentId: number;
+  level: number;
+  note?: string;
+  rootGroupId: number;
+  archived: number;
+  billable: boolean;
+  color?: string;
+  hasChildren: boolean;
+  disabled: boolean;
+  disableReason?: string;
+  isMatched: boolean;
+}
+
+export interface TimeCampTaskFavoritesMeta {
+  favourites?: {
+    limit: number;
+  };
+  [key: string]: any;
+}
+
+export interface TimeCampTaskFavoritesResponse {
+  data: {
+    favourites: TimeCampTaskPickerItem[];
+    suggested: TimeCampTaskPickerItem[];
+  };
+  message: string;
+  meta: TimeCampTaskFavoritesMeta;
+}
+
+export interface TimeCampTaskFavoriteMutationResponse {
+  data?: {
+    taskId?: number;
+    [key: string]: any;
+  };
+  message: string;
+  meta?: Record<string, any>;
+}
+
 export interface GetActiveUserTasksOptions {
   user?: string;
   includeFullBreadcrumb?: boolean;

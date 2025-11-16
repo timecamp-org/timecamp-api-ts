@@ -40,6 +40,14 @@ if (allTasksResponse.success) {
   console.log(allTasksResponse.data); // Active + archived tasks
 }
 
+// Get favourite tasks for the task picker widget
+const favourites = await timecampApi.tasks.getFavorites();
+console.log(favourites.data.favourites);
+
+// Manage favourites
+await timecampApi.tasks.addFavorite(77390460);
+await timecampApi.tasks.removeFavorite(77189336);
+
 // Timer operations
 const timerStatus = await timecampApi.timer.status();
 const startedTimer = await timecampApi.timer.start();
@@ -94,6 +102,9 @@ new TimeCampAPI(apiKey: string, config?: TimeCampAPIConfig)
 | `customFields.delete(templateId)` | Remove a custom field template (v3) | `templateId: number` | `Promise<{ data: string }>` |
 | `tasks.getAll()` | Get every task including archived | None | `Promise<TasksAPIResponse>` |
 | `tasks.getActiveUserTasks(options?: GetActiveUserTasksOptions)` | Get all non-archived tasks | `options`: `{ user?: string; includeFullBreadcrumb?: boolean; }` | `Promise<TasksAPIResponse>` |
+| `tasks.getFavorites()` | Fetch task picker favourites and suggestions | None | `Promise<TimeCampTaskFavoritesResponse>` |
+| `tasks.addFavorite(taskId)` | Mark a task as favourite for the picker | `taskId: number` | `Promise<TimeCampTaskFavoriteMutationResponse>` |
+| `tasks.removeFavorite(taskId)` | Remove a task from favourites | `taskId: number` | `Promise<TimeCampTaskFavoriteMutationResponse>` |
 | `timer.start()` | Start a new timer | `data?: TimerStartRequest` | `Promise<any>` |
 | `timer.stop()` | Stop the currently running timer | `data?: TimerStopRequest` | `Promise<any>` |
 | `timer.status()` | Get the current timer status | None | `Promise<any>` |

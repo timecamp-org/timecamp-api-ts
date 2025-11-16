@@ -20,7 +20,9 @@ import {
   TimeCampCustomFieldAssignmentResponse,
   TimeCampCustomFieldValuesResponse,
   TimeCampCustomFieldResourceType,
-  TimeCampUsersMapResponse
+  TimeCampUsersMapResponse,
+  TimeCampTaskFavoritesResponse,
+  TimeCampTaskFavoriteMutationResponse
 } from './types';
 import { prepareTasksArray } from './taskFilters';
 
@@ -362,6 +364,21 @@ export class TimeCampAPI {
             error: error instanceof Error ? error.message : 'Unknown error'
           };
         }
+      },
+
+      getFavorites: async (): Promise<TimeCampTaskFavoritesResponse> => {
+        const endpoint = this.buildV3Endpoint('taskPicker/favourites');
+        return this.makeRequest<TimeCampTaskFavoritesResponse>('GET', endpoint);
+      },
+
+      addFavorite: async (taskId: number): Promise<TimeCampTaskFavoriteMutationResponse> => {
+        const endpoint = this.buildV3Endpoint(`taskPicker/favourites/add/${taskId}`);
+        return this.makeRequest<TimeCampTaskFavoriteMutationResponse>('POST', endpoint);
+      },
+
+      removeFavorite: async (taskId: number): Promise<TimeCampTaskFavoriteMutationResponse> => {
+        const endpoint = this.buildV3Endpoint(`taskPicker/favourites/delete/${taskId}`);
+        return this.makeRequest<TimeCampTaskFavoriteMutationResponse>('DELETE', endpoint);
       }
     };
   }
