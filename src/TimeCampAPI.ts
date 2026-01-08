@@ -64,7 +64,7 @@ export class TimeCampAPI {
     });
   }
 
-  private async makeRequest<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', endpoint: string, options: { params?: Record<string, string>; json?: any; retryOn429?: boolean; maxRetries?: number; retryDelay?: number } = {}): Promise<T> {
+  private async makeRequest<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', endpoint: string, options: { params?: Record<string, string>; json?: any; formData?: Record<string, string>; retryOn429?: boolean; maxRetries?: number; retryDelay?: number } = {}): Promise<T> {
     const maxRetries = options.retryOn429 ? (options.maxRetries ?? 3) : 0;
     const retryDelay = options.retryDelay ?? 5000; // 5 seconds default
     let lastError: Error | null = null;
@@ -74,7 +74,7 @@ export class TimeCampAPI {
         const config: any = {
           method,
           url: `${this.client.defaults.baseURL}/${endpoint}`,
-          headers: this.client.defaults.headers,
+          headers: { ...this.client.defaults.headers },
         };
 
         if (options.params) {
@@ -83,6 +83,12 @@ export class TimeCampAPI {
 
         if (options.json) {
           config.data = options.json;
+        }
+
+        if (options.formData) {
+          // Use application/x-www-form-urlencoded for form data
+          config.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+          config.data = new URLSearchParams(options.formData).toString();
         }
 
         // For GET requests with JSON format, ensure we get JSON response
@@ -332,12 +338,65 @@ export class TimeCampAPI {
           force_change_pass: "0"
         };
         
-        return self.makeRequest<TimeCampUserInviteResponse>('POST', `group/${targetGroupId}/user`, { 
+        const inviteResponse = await self.makeRequest<TimeCampUserInviteResponse>('POST', `group/${targetGroupId}/user`, { 
           json: data,
           retryOn429: true,
           maxRetries: 3,
           retryDelay: 5000
         });
+        
+        // If name is provided and invite was successful, update the user's display name
+        if (name && inviteResponse.statuses[email]?.status) {
+          try {
+            // Fetch all users to get the user_id for the invited email
+            // The user may not be immediately available, so retry up to 10 times with 2s delay
+            let userId: string | undefined;
+            const maxAttempts = 10;
+            const retryDelay = 2000; // 2 seconds
+            
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+              if (attempt > 0) {
+                await new Promise(resolve => setTimeout(resolve, retryDelay));
+              }
+              
+              const usersMap = await api.getAll();
+              
+              // Find the user with matching email
+              for (const key in usersMap) {
+                const user = usersMap[key];
+                if (user.email === email) {
+                  userId = user.user_id || user.id;
+                  break;
+                }
+              }
+              
+              if (userId) {
+                break; // Found the user, exit retry loop
+              }
+            }
+            
+            if (userId) {
+              // Update the display name using form-encoded POST
+              await self.makeRequest('POST', 'user', {
+                formData: {
+                  display_name: name,
+                  user_id: userId
+                },
+                retryOn429: true,
+                maxRetries: 3,
+                retryDelay: 5000
+              });
+              
+              // Add user_id to response
+              inviteResponse.user_id = userId;
+            }
+          } catch (error) {
+            // If updating display name fails, we still return the successful invite response
+            // Silent fail to not break the invite flow
+          }
+        }
+        
+        return inviteResponse;
       }
     } as const;
     return api;

@@ -201,17 +201,25 @@ Returns: `Promise<Record<string, any>>`
 
 #### `users.invite(params: TimeCampUserInviteRequest)`
 
-Invite a user to your TimeCamp account.
+Invite a user to your TimeCamp account. When a `name` parameter is provided, the method will automatically update the user's display name after the invite is successful.
 
 **Parameters**:
 - `params`: User invitation parameters
   - `email`: Email address of the user to invite (required)
-  - `name`: Display name for the user (optional)
+  - `name`: Display name for the user (optional). If provided, an additional API call will be made to update the user's display name after the invite.
   - `group_id`: ID of the group to add the user to (optional, defaults to current user's root group)
 
 **Returns**: `Promise<TimeCampUserInviteResponse>`
 
 **Retry Behavior**: This method automatically retries up to 3 times with a 5-second delay when encountering a 429 (rate limit) error.
+
+**Display Name Update**: When a `name` is provided, the method will:
+1. Send the invitation
+2. Poll the user list (up to 10 times with 2-second delays) to find the new user's ID
+3. Make an additional POST request to `api/user` with form-encoded data to update the user's display name
+4. Return the response with the `user_id` included
+
+Note: There is typically a 2-4 second delay between when the invite succeeds and when the user appears in the users list, which is why the method includes retry logic.
 
 ```typescript
 interface TimeCampUserInviteRequest {
@@ -226,28 +234,39 @@ interface TimeCampUserInviteResponse {
       status: string; // e.g., "Invite", "Already exists", etc.
     };
   };
+  user_id?: string; // Included when name is provided and update succeeds
 }
 ```
 
 **Example**:
 
 ```typescript
-// Invite user with automatic group assignment (uses your root group)
+// Invite user with automatic group assignment and set display name
 const result = await timecampApi.users.invite({
   email: 'newuser@example.com',
   name: 'John Doe'
 });
-// Response: { statuses: { 'newuser@example.com': { status: 'Invite' } } }
+// Response: { 
+//   statuses: { 'newuser@example.com': { status: 'Invite' } },
+//   user_id: '123456'
+// }
 
-// Invite user to a specific group
+// Invite user to a specific group with display name
 const result2 = await timecampApi.users.invite({
   email: 'newuser@example.com',
   name: 'John Doe',
   group_id: 12345
 });
 
-// Check the invite status
+// Invite user without setting a display name (skips name update)
+const result3 = await timecampApi.users.invite({
+  email: 'another@example.com',
+  group_id: 12345
+});
+
+// Check the invite status and user ID
 console.log(result.statuses['newuser@example.com'].status); // "Invite"
+console.log(result.user_id); // "123456"
 ```
 
 #### Custom Fields (v3)

@@ -27,14 +27,27 @@ describe('Users API', () => {
   })
 
   it('users.invite sends POST request with email to group endpoint', async () => {
-    const mockResponse = { 
+    const mockInviteResponse = { 
       statuses: { 
         'test@example.com': { 
           status: 'Invite' 
         } 
       } 
     }
-    ;(axios as unknown as jest.Mock).mockResolvedValueOnce({ data: mockResponse })
+    const mockUsersResponse = {
+      '123': {
+        user_id: '123',
+        email: 'test@example.com',
+        display_name: 'Old Name'
+      }
+    }
+    
+    // Mock the invite call
+    ;(axios as unknown as jest.Mock).mockResolvedValueOnce({ data: mockInviteResponse })
+    // Mock the users.getAll call
+    ;(axios as unknown as jest.Mock).mockResolvedValueOnce({ data: mockUsersResponse })
+    // Mock the display name update call
+    ;(axios as unknown as jest.Mock).mockResolvedValueOnce({ data: { success: true } })
 
     const res = await api.users.invite({
       email: 'test@example.com',
@@ -42,8 +55,10 @@ describe('Users API', () => {
       group_id: 123
     })
 
-    expect(res).toEqual(mockResponse)
     expect(res.statuses['test@example.com'].status).toBe('Invite')
+    expect(res.user_id).toBe('123')
+    
+    // Verify invite call
     expect(axios).toHaveBeenCalledWith(expect.objectContaining({
       method: 'POST',
       url: expect.stringContaining('/group/123/user'),
@@ -56,6 +71,49 @@ describe('Users API', () => {
         send_email: '0',
         force_change_pass: '0'
       })
+    }))
+    
+    // Verify users.getAll call
+    expect(axios).toHaveBeenCalledWith(expect.objectContaining({
+      method: 'GET',
+      url: expect.stringContaining('/users')
+    }))
+    
+    // Verify display name update call
+    expect(axios).toHaveBeenCalledWith(expect.objectContaining({
+      method: 'POST',
+      url: expect.stringContaining('/user'),
+      data: 'display_name=Test+User&user_id=123',
+      headers: expect.objectContaining({
+        'Content-Type': 'application/x-www-form-urlencoded'
+      })
+    }))
+  })
+
+  it('users.invite without name does not update display name', async () => {
+    const mockInviteResponse = { 
+      statuses: { 
+        'test@example.com': { 
+          status: 'Invite' 
+        } 
+      } 
+    }
+    
+    ;(axios as unknown as jest.Mock).mockResolvedValueOnce({ data: mockInviteResponse })
+
+    const res = await api.users.invite({
+      email: 'test@example.com',
+      group_id: 123
+    })
+
+    expect(res.statuses['test@example.com'].status).toBe('Invite')
+    expect(res.user_id).toBeUndefined()
+    
+    // Should only make the invite call, not the users.getAll or update calls
+    expect(axios).toHaveBeenCalledTimes(1)
+    expect(axios).toHaveBeenCalledWith(expect.objectContaining({
+      method: 'POST',
+      url: expect.stringContaining('/group/123/user')
     }))
   })
 
@@ -75,6 +133,13 @@ describe('Users API', () => {
         } 
       } 
     }
+    const mockUsersResponse = {
+      '888': {
+        user_id: '888',
+        email: 'newuser@example.com',
+        display_name: 'Old Name'
+      }
+    }
 
     // Mock the user.get() call
     const fakeInstance = (api as any).client
@@ -82,14 +147,18 @@ describe('Users API', () => {
 
     // Mock the invite POST call
     ;(axios as unknown as jest.Mock).mockResolvedValueOnce({ data: mockInviteResponse })
+    // Mock the users.getAll call
+    ;(axios as unknown as jest.Mock).mockResolvedValueOnce({ data: mockUsersResponse })
+    // Mock the display name update call
+    ;(axios as unknown as jest.Mock).mockResolvedValueOnce({ data: { success: true } })
 
     const res = await api.users.invite({
       email: 'newuser@example.com',
       name: 'New User'
     })
 
-    expect(res).toEqual(mockInviteResponse)
     expect(res.statuses['newuser@example.com'].status).toBe('Invite')
+    expect(res.user_id).toBe('888')
     expect(fakeInstance.get).toHaveBeenCalledWith('/me')
     expect(axios).toHaveBeenCalledWith(expect.objectContaining({
       method: 'POST',
@@ -121,7 +190,7 @@ describe('Users API', () => {
       toJSON: () => ({})
     })
 
-    // Mock: first two calls fail with 429, third succeeds
+    // Mock: first two calls fail with 429, third succeeds (no name provided, so no extra calls)
     ;(axios as unknown as jest.Mock)
       .mockRejectedValueOnce(mock429Error)
       .mockRejectedValueOnce(mock429Error)
@@ -129,7 +198,6 @@ describe('Users API', () => {
 
     const invitePromise = api.users.invite({
       email: 'newuser@example.com',
-      name: 'New User',
       group_id: 123
     })
 
@@ -162,10 +230,9 @@ describe('Users API', () => {
     ;(axios as unknown as jest.Mock)
       .mockRejectedValue(mock429Error)
 
-    // Start the invite process
+    // Start the invite process (no name to avoid extra calls)
     const invitePromise = api.users.invite({
       email: 'newuser@example.com',
-      name: 'New User',
       group_id: 123
     }).catch(err => err) // Catch the error to prevent unhandled rejection
 

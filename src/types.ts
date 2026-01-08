@@ -295,4 +295,5 @@ export interface TimeCampUserInviteResponse {
       status: string; // e.g., "Invite", "Already exists", etc.
     };
   };
+  user_id?: string; // Populated only when 'name' parameter is provided and user is successfully found
 }
