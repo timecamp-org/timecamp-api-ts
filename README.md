@@ -109,6 +109,7 @@ new TimeCampAPI(apiKey: string, config?: TimeCampAPIConfig)
 | `customFields.delete(templateId)` | Remove a custom field template (v3) | `templateId: number` | `Promise<{ data: string }>` |
 | `tasks.getAll()` | Get every task including archived | None | `Promise<TasksAPIResponse>` |
 | `tasks.getActiveUserTasks(options?: GetActiveUserTasksOptions)` | Get all non-archived tasks | `options`: `{ user?: string; includeFullBreadcrumb?: boolean; }` | `Promise<TasksAPIResponse>` |
+| `tasks.add(params)` | Create a new task | `params: TimeCampCreateTaskRequest` | `Promise<TimeCampCreateTaskResponse>` |
 | `tasks.getFavorites()` | Fetch task picker favourites and suggestions | None | `Promise<TimeCampTaskFavoritesResponse>` |
 | `tasks.addFavorite(taskId)` | Mark a task as favourite for the picker | `taskId: number` | `Promise<TimeCampTaskFavoriteMutationResponse>` |
 | `tasks.removeFavorite(taskId)` | Remove a task from favourites | `taskId: number` | `Promise<TimeCampTaskFavoriteMutationResponse>` |
@@ -193,6 +194,106 @@ interface TimeCampTask {
 ```
 
 #### `tasks.getAll()`
+
+Get all tasks including archived ones.
+
+**Returns**: `Promise<TasksAPIResponse>`
+
+#### `tasks.add(params: TimeCampCreateTaskRequest)`
+
+Create a new task in TimeCamp. This method allows you to create tasks with various parameters including external IDs for integrations.
+
+**Parameters**:
+- `params`: Task creation parameters
+  - `name`: Task name (required)
+  - `parent_id`: Parent task ID as number (optional)
+  - `external_task_id`: External task ID for integrations like Xero (optional)
+  - `external_parent_id`: External parent task ID (optional)
+  - `budgeted`: Budget value in the unit specified by `budget_unit` (optional)
+  - `note`: Task description/note (optional)
+  - `archived`: 0 for active, 1 for archived (optional, default: 0)
+  - `billable`: 0 for non-billable, 1 for billable (optional, default: 1)
+  - `budget_unit`: 'hours', 'fee', or '' (optional, default: 'hours')
+  - `user_ids`: Comma-separated user IDs to add to task (optional, e.g., "22,521,2,25")
+  - `role`: Role ID to assign to users if user_ids is provided (optional)
+  - `keywords`: Task keywords, comma-separated (optional, e.g., "IT, R&D")
+  - `tags`: (deprecated) Use keywords instead (optional)
+
+**Returns**: `Promise<TimeCampCreateTaskResponse>`
+
+```typescript
+interface TimeCampCreateTaskRequest {
+  name: string; // required
+  parent_id?: number;
+  external_task_id?: string;
+  external_parent_id?: string;
+  budgeted?: number;
+  note?: string;
+  archived?: 0 | 1;
+  billable?: 0 | 1;
+  budget_unit?: 'hours' | 'fee' | '';
+  user_ids?: string;
+  role?: number;
+  keywords?: string;
+  tags?: string; // deprecated
+}
+
+interface TimeCampCreateTaskResponse {
+  [taskId: string]: {
+    task_id: number;
+    parent_id: number;
+    name: string;
+    external_task_id: string | null;
+    external_parent_id: string | null;
+    level: number;
+    add_date: string;
+    archived: number;
+    color: string;
+    tags: string;
+    budgeted: number;
+    checked_date: string | null;
+    root_group_id: number;
+    billable: number;
+    budget_unit: string;
+    note: string | null;
+    keywords: string;
+    // ... additional fields
+  };
+}
+```
+
+**Example**:
+
+```typescript
+// Create a simple task
+const task = await api.tasks.add({
+  name: 'Development Task'
+});
+
+// Create a task with external ID (for integrations)
+const taskWithExternal = await api.tasks.add({
+  name: 'Xero Invoice Task',
+  external_task_id: 'xero_g8g89s78ds8',
+  external_parent_id: 'xero_2b5b26tb295bb9'
+});
+
+// Create a child task with full parameters
+const childTask = await api.tasks.add({
+  name: 'Backend Development',
+  parent_id: 123456, // number type
+  budgeted: 1000,
+  budget_unit: 'hours',
+  billable: 1,
+  note: 'Development task for API integration',
+  keywords: 'API, Backend, Development'
+});
+
+// Access the created task data
+const taskId = Object.keys(task)[0];
+const taskData = task[taskId];
+console.log(`Created task: ${taskData.name} (ID: ${taskData.task_id})`);
+```
+
 #### `users.getAll()`
 
 List all users visible to the authenticated account.

@@ -297,3 +297,65 @@ export interface TimeCampUserInviteResponse {
   };
   user_id?: string; // Populated only when 'name' parameter is provided and user is successfully found
 }
+
+export interface TimeCampCreateTaskRequest {
+  /** Task name (required) */
+  name: string;
+  /** Task parent ID */
+  parent_id?: number;
+  /** External task ID (e.g., ID from integration like Xero) */
+  external_task_id?: string;
+  /** External parent task ID (e.g., ID from integration like Xero) */
+  external_parent_id?: string;
+  /** Task budget value (defined in the unit specified by budget_unit) */
+  budgeted?: number;
+  /** Task description/note */
+  note?: string;
+  /** Is task archived (0 = active, 1 = archived) */
+  archived?: 0 | 1;
+  /** Is task billable (0 = non-billable, 1 = billable) */
+  billable?: 0 | 1;
+  /** Budget unit: 'hours' for time, 'fee' for fixed price, empty string for no budget */
+  budget_unit?: 'hours' | 'fee' | '';
+  /** Comma-separated user IDs to add to task (e.g., "22,521,2,25") */
+  user_ids?: string;
+  /** Role ID to assign to users if user_ids is provided */
+  role?: number;
+  /** Task keywords (comma-separated, e.g., "IT, R&D") */
+  keywords?: string;
+  /** @deprecated Use keywords instead. Comma-separated tag names */
+  tags?: string;
+}
+
+export interface TimeCampCreateTaskResponseData {
+  task_id: number;
+  parent_id: number;
+  name: string;
+  external_task_id: string | null;
+  external_parent_id: string | null;
+  level: number;
+  add_date: string;
+  archived: number;
+  color: string;
+  tags: string;
+  budgeted: number;
+  checked_date: string | null;
+  root_group_id: number;
+  assigned_to: number | null;
+  assigned_by: number;
+  due_date: string | null;
+  note: string | null;
+  context: string | null;
+  folder: string | null;
+  repeat: string | null;
+  billable: number;
+  budget_unit: string;
+  public_hash: string | null;
+  modify_time: string | null;
+  task_key: string | null;
+  keywords: string;
+}
+
+export interface TimeCampCreateTaskResponse {
+  [taskId: string]: TimeCampCreateTaskResponseData;
+}

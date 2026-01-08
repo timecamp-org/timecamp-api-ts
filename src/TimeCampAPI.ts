@@ -26,7 +26,9 @@ import {
   TimeCampTaskFavoritesResponse,
   TimeCampTaskFavoriteMutationResponse,
   TimeCampUserInviteRequest,
-  TimeCampUserInviteResponse
+  TimeCampUserInviteResponse,
+  TimeCampCreateTaskRequest,
+  TimeCampCreateTaskResponse
 } from './types';
 import { prepareTasksArray } from './taskFilters';
 
@@ -474,6 +476,70 @@ export class TimeCampAPI {
             error: error instanceof Error ? error.message : 'Unknown error'
           };
         }
+      },
+
+      add: async (params: TimeCampCreateTaskRequest): Promise<TimeCampCreateTaskResponse> => {
+        // Validate required field
+        if (!params.name) {
+          throw new Error('Task name is required');
+        }
+
+        // Build request body with all optional parameters
+        const requestBody: Record<string, any> = {
+          name: params.name
+        };
+
+        // Add optional parameters if provided
+        if (params.parent_id !== undefined) requestBody.parent_id = String(params.parent_id);
+        if (params.external_task_id !== undefined) requestBody.external_task_id = params.external_task_id;
+        if (params.external_parent_id !== undefined) requestBody.external_parent_id = params.external_parent_id;
+        if (params.budgeted !== undefined) requestBody.budgeted = params.budgeted;
+        if (params.note !== undefined) requestBody.note = params.note;
+        if (params.archived !== undefined) requestBody.archived = params.archived;
+        if (params.billable !== undefined) requestBody.billable = params.billable;
+        if (params.budget_unit !== undefined) requestBody.budget_unit = params.budget_unit;
+        if (params.user_ids !== undefined) requestBody.user_ids = params.user_ids;
+        if (params.role !== undefined) requestBody.role = params.role;
+        if (params.keywords !== undefined) requestBody.keywords = params.keywords;
+        if (params.tags !== undefined) requestBody.tags = params.tags;
+
+        const response = await this.makeRequest<any>('POST', 'tasks', { json: requestBody });
+        
+        // Convert string fields to numbers for better type safety
+        const normalizedResponse: TimeCampCreateTaskResponse = {};
+        for (const taskId in response) {
+          const task = response[taskId];
+          normalizedResponse[taskId] = {
+            task_id: parseInt(task.task_id, 10),
+            parent_id: parseInt(task.parent_id, 10),
+            name: task.name,
+            external_task_id: task.external_task_id,
+            external_parent_id: task.external_parent_id,
+            level: parseInt(task.level, 10),
+            add_date: task.add_date,
+            archived: parseInt(task.archived, 10),
+            color: task.color,
+            tags: task.tags,
+            budgeted: parseInt(task.budgeted, 10),
+            checked_date: task.checked_date,
+            root_group_id: parseInt(task.root_group_id, 10),
+            assigned_to: task.assigned_to ? parseInt(task.assigned_to, 10) : null,
+            assigned_by: parseInt(task.assigned_by, 10),
+            due_date: task.due_date,
+            note: task.note,
+            context: task.context,
+            folder: task.folder,
+            repeat: task.repeat,
+            billable: parseInt(task.billable, 10),
+            budget_unit: task.budget_unit,
+            public_hash: task.public_hash,
+            modify_time: task.modify_time,
+            task_key: task.task_key,
+            keywords: task.keywords
+          };
+        }
+        
+        return normalizedResponse;
       },
 
       getFavorites: async (): Promise<TimeCampTaskFavoritesResponse> => {
