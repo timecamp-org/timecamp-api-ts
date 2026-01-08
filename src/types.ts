@@ -223,6 +223,8 @@ export interface TimeCampCreateTimeEntryRequest {
   description?: string;
   start_time: string;
   end_time: string;
+  user_id?: number; //todo: only in create time entry
+  billable?: boolean;
 }
 
 export interface TimeCampCreateTimeEntryResponse {

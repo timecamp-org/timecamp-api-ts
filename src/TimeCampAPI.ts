@@ -627,10 +627,20 @@ export class TimeCampAPI {
             end_time: entry.end_time,
             service: this.clientName
           };
-          
+
           // Only include task_id if it's provided and not null/undefined
           if (entry.task_id) {
             requestBody.task_id = entry.task_id;
+          }
+
+          // Include user_id if provided
+          if (entry.user_id) {
+            requestBody.user_id = entry.user_id;
+          }
+
+          // Include billable if provided
+          if (entry.billable !== undefined) {
+            requestBody.billable = entry.billable;
           }
           
           const response = await this.makeRequest<any>('POST', 'entries', { 
@@ -664,6 +674,7 @@ export class TimeCampAPI {
           if (entry.description !== undefined) updateData.description = entry.description
           if (entry.start_time !== undefined) updateData.start_time = entry.start_time
           if (entry.end_time !== undefined) updateData.end_time = entry.end_time
+          if (entry.billable !== undefined) updateData.billable = entry.billable
           
           const response = await this.makeRequest<any>('PUT', 'entries', { 
             json: updateData
