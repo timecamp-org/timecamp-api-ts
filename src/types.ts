@@ -127,11 +127,11 @@ export interface TimeCampTaskPickerItem {
   name: string;
   parentId: number;
   level: number;
-  note?: string;
+  note?: string; // task description if set
   rootGroupId: number;
   archived: number;
   billable: boolean;
-  color?: string;
+  color?: string; // example: '#000000'
   hasChildren: boolean;
   disabled: boolean;
   disableReason?: string;

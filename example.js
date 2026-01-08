@@ -24,6 +24,7 @@ async function example() {
 
     // Get favourite tasks for the task picker widget
     const favourites = await timecampApi.tasks.getFavorites();
+    console.log('Favourites:', favourites.data.suggested);
     console.log('Favourites:', favourites.data.favourites);
 
     // Remove a favourite task
