@@ -282,3 +282,17 @@ export interface TimeCampCustomFieldValuesResponse {
 }
 
 export type TimeCampUsersMapResponse = Record<string, any>;
+
+export interface TimeCampUserInviteRequest {
+  email: string;
+  name?: string;
+  group_id?: number;
+}
+
+export interface TimeCampUserInviteResponse {
+  statuses: {
+    [email: string]: {
+      status: string; // e.g., "Invite", "Already exists", etc.
+    };
+  };
+}

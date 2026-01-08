@@ -25,6 +25,12 @@ const timecampApi = new TimeCampAPI("your-api-key", {
 const user = await timecampApi.user.get();
 console.log(user);
 
+// Invite a user to your account
+await timecampApi.users.invite({
+  email: 'newuser@example.com',
+  name: 'John Doe'
+});
+
 // Get tasks
 const tasksResponse = await timecampApi.tasks.getActiveUserTasks({
   user: 'me',
@@ -94,6 +100,7 @@ new TimeCampAPI(apiKey: string, config?: TimeCampAPIConfig)
 |--------|-------------|------------|---------|
 | `user.get()` | Get information about the current user | None | `Promise<TimeCampUser>` |
 | `users.getAll()` | Get all users | None | `Promise<Record<string, any>>` |
+| `users.invite()` | Invite a user to TimeCamp account | `params: TimeCampUserInviteRequest` | `Promise<TimeCampUserInviteResponse>` |
 | `users.byId(id)` | Chainable selector for a user resource | `id: number` | `{ getAllCustomFields, getCustomField, setCustomField, updateCustomField, deleteCustomField }` |
 | `tasks.byId(id)` | Chainable selector for a task resource | `id: number` | `{ getAllCustomFields, getCustomField, setCustomField, updateCustomField, deleteCustomField }` |
 | `timeEntries.byId(id)` | Chainable selector for a time entry resource | `id: number` | `{ getAllCustomFields, getCustomField, setCustomField, updateCustomField, deleteCustomField }` |
@@ -191,6 +198,57 @@ interface TimeCampTask {
 List all users visible to the authenticated account.
 
 Returns: `Promise<Record<string, any>>`
+
+#### `users.invite(params: TimeCampUserInviteRequest)`
+
+Invite a user to your TimeCamp account.
+
+**Parameters**:
+- `params`: User invitation parameters
+  - `email`: Email address of the user to invite (required)
+  - `name`: Display name for the user (optional)
+  - `group_id`: ID of the group to add the user to (optional, defaults to current user's root group)
+
+**Returns**: `Promise<TimeCampUserInviteResponse>`
+
+**Retry Behavior**: This method automatically retries up to 3 times with a 5-second delay when encountering a 429 (rate limit) error.
+
+```typescript
+interface TimeCampUserInviteRequest {
+  email: string;
+  name?: string;
+  group_id?: number;
+}
+
+interface TimeCampUserInviteResponse {
+  statuses: {
+    [email: string]: {
+      status: string; // e.g., "Invite", "Already exists", etc.
+    };
+  };
+}
+```
+
+**Example**:
+
+```typescript
+// Invite user with automatic group assignment (uses your root group)
+const result = await timecampApi.users.invite({
+  email: 'newuser@example.com',
+  name: 'John Doe'
+});
+// Response: { statuses: { 'newuser@example.com': { status: 'Invite' } } }
+
+// Invite user to a specific group
+const result2 = await timecampApi.users.invite({
+  email: 'newuser@example.com',
+  name: 'John Doe',
+  group_id: 12345
+});
+
+// Check the invite status
+console.log(result.statuses['newuser@example.com'].status); // "Invite"
+```
 
 #### Custom Fields (v3)
 

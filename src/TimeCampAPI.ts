@@ -24,7 +24,9 @@ import {
   TimeCampCustomFieldResourceType,
   TimeCampUsersMapResponse,
   TimeCampTaskFavoritesResponse,
-  TimeCampTaskFavoriteMutationResponse
+  TimeCampTaskFavoriteMutationResponse,
+  TimeCampUserInviteRequest,
+  TimeCampUserInviteResponse
 } from './types';
 import { prepareTasksArray } from './taskFilters';
 
@@ -62,35 +64,54 @@ export class TimeCampAPI {
     });
   }
 
-  private async makeRequest<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', endpoint: string, options: { params?: Record<string, string>; json?: any } = {}): Promise<T> {
-    try {
-      const config: any = {
-        method,
-        url: `${this.client.defaults.baseURL}/${endpoint}`,
-        headers: this.client.defaults.headers,
-      };
+  private async makeRequest<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', endpoint: string, options: { params?: Record<string, string>; json?: any; retryOn429?: boolean; maxRetries?: number; retryDelay?: number } = {}): Promise<T> {
+    const maxRetries = options.retryOn429 ? (options.maxRetries ?? 3) : 0;
+    const retryDelay = options.retryDelay ?? 5000; // 5 seconds default
+    let lastError: Error | null = null;
 
-      if (options.params) {
-        config.params = options.params;
-      }
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const config: any = {
+          method,
+          url: `${this.client.defaults.baseURL}/${endpoint}`,
+          headers: this.client.defaults.headers,
+        };
 
-      if (options.json) {
-        config.data = options.json;
-      }
+        if (options.params) {
+          config.params = options.params;
+        }
 
-      // For GET requests with JSON format, ensure we get JSON response
-      if (method === 'GET' && !options.params?.format) {
-        config.params = { ...config.params, format: 'json' };
-      }
+        if (options.json) {
+          config.data = options.json;
+        }
 
-      const response: AxiosResponse<T> = await axios(config);
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(`TimeCamp API error: ${error.response?.status} - ${JSON.stringify(error.response?.data)}`);
+        // For GET requests with JSON format, ensure we get JSON response
+        if (method === 'GET' && !options.params?.format) {
+          config.params = { ...config.params, format: 'json' };
+        }
+
+        const response: AxiosResponse<T> = await axios(config);
+        return response.data;
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          const status = error.response?.status;
+          const errorMessage = `TimeCamp API error: ${status} - ${JSON.stringify(error.response?.data)}`;
+          
+          // If it's a 429 error and we have retries left, wait and retry
+          if (status === 429 && attempt < maxRetries) {
+            lastError = new Error(errorMessage);
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+            continue;
+          }
+          
+          throw new Error(errorMessage);
+        }
+        throw error;
       }
-      throw error;
     }
+
+    // This should never be reached, but just in case
+    throw lastError || new Error('Request failed after retries');
   }
 
   public get user() {
@@ -289,7 +310,35 @@ export class TimeCampAPI {
 
         return enriched;
       },
-      byId: (id: number) => self.resourceCustomFields('user', id)
+      byId: (id: number) => self.resourceCustomFields('user', id),
+      invite: async (params: TimeCampUserInviteRequest): Promise<TimeCampUserInviteResponse> => {
+        const { email, name, group_id } = params;
+        
+        // If group_id is not provided, fetch it from current user
+        let targetGroupId = group_id;
+        if (!targetGroupId) {
+          const currentUser = await self.user.get();
+          targetGroupId = parseInt(currentUser.root_group_id, 10);
+        }
+        
+        // Prepare the request data according to TimeCamp API format
+        const data = {
+          email: [email],
+          tt_global_admin: "0",
+          tt_can_create_level_1_tasks: "0",
+          can_view_rates: "0",
+          add_to_all_projects: "0",
+          send_email: "0",
+          force_change_pass: "0"
+        };
+        
+        return self.makeRequest<TimeCampUserInviteResponse>('POST', `group/${targetGroupId}/user`, { 
+          json: data,
+          retryOn429: true,
+          maxRetries: 3,
+          retryDelay: 5000
+        });
+      }
     } as const;
     return api;
   }
