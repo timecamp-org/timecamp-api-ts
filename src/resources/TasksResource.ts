@@ -119,6 +119,7 @@ export class TasksResource extends BaseResource {
     const normalizedResponse: TimeCampCreateTaskResponse = {};
     for (const taskId in response) {
       const task = response[taskId];
+      if (!task) continue;
       normalizedResponse[taskId] = {
         task_id: parseInt(task.task_id, 10),
         parent_id: parseInt(task.parent_id, 10),
@@ -181,6 +182,7 @@ export class TasksResource extends BaseResource {
     const normalizedResponse: TimeCampCreateTaskResponse = {};
     for (const taskId in response) {
       const task = response[taskId];
+      if (!task) continue;
       normalizedResponse[taskId] = {
         task_id: parseInt(task.task_id, 10),
         parent_id: parseInt(task.parent_id, 10),

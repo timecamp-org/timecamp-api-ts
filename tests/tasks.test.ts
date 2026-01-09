@@ -286,4 +286,17 @@ describe('Tasks API', () => {
     expect(body.user_ids).toBe('22,521,2,25')
     expect(body.role).toBe(5325)
   })
+
+  it('tasks.update handles null task in response gracefully', async () => {
+    const mockApiResponse = {
+      '81272870': null
+    }
+    mockFetch.mockResolvedValueOnce(createMockResponse(mockApiResponse))
+
+    // This should not throw
+    const res = await api.tasks.update({ task_id: 81272870, name: 'Updated Task Name' })
+    
+    // Verify result is empty or handles it
+    expect(res['81272870']).toBeUndefined()
+  })
 })
