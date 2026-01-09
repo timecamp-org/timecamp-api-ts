@@ -192,4 +192,98 @@ describe('Tasks API', () => {
       expect.objectContaining({ method: 'DELETE' })
     )
   })
+
+  it('tasks.update requires task_id parameter', async () => {
+    await expect(api.tasks.update({ task_id: 0 } as any)).rejects.toThrow('Task ID is required')
+  })
+
+  it('tasks.update puts to tasks endpoint', async () => {
+    const mockApiResponse = {
+      '81272870': {
+        task_id: '81272870',
+        parent_id: '0',
+        name: 'Updated Task Name',
+        external_task_id: null,
+        external_parent_id: null,
+        level: '1',
+        add_date: '2026-01-08 13:51:21',
+        archived: '0',
+        color: '#34C664',
+        tags: '',
+        budgeted: '0',
+        checked_date: null,
+        root_group_id: '123',
+        assigned_to: null,
+        assigned_by: '640',
+        due_date: null,
+        note: null,
+        context: null,
+        folder: null,
+        repeat: null,
+        billable: '1',
+        budget_unit: 'hours',
+        public_hash: null,
+        modify_time: null,
+        task_key: null,
+        keywords: ''
+      }
+    }
+    mockFetch.mockResolvedValueOnce(createMockResponse(mockApiResponse))
+
+    const res = await api.tasks.update({ task_id: 81272870, name: 'Updated Task Name' })
+
+    expect(res['81272870'].name).toBe('Updated Task Name')
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/tasks'),
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({ task_id: '81272870', name: 'Updated Task Name' })
+      })
+    )
+  })
+
+  it('tasks.update supports user assignment parameters', async () => {
+    const mockApiResponse = {
+      '81272870': {
+        task_id: '81272870',
+        parent_id: '0',
+        name: 'Task with Users',
+        external_task_id: null,
+        external_parent_id: null,
+        level: '1',
+        add_date: '2026-01-08 13:51:21',
+        archived: '0',
+        color: '#34C664',
+        tags: '',
+        budgeted: '0',
+        checked_date: null,
+        root_group_id: '123',
+        assigned_to: null,
+        assigned_by: '640',
+        due_date: null,
+        note: null,
+        context: null,
+        folder: null,
+        repeat: null,
+        billable: '1',
+        budget_unit: 'hours',
+        public_hash: null,
+        modify_time: null,
+        task_key: null,
+        keywords: ''
+      }
+    }
+    mockFetch.mockResolvedValueOnce(createMockResponse(mockApiResponse))
+
+    await api.tasks.update({
+      task_id: 81272870,
+      user_ids: '22,521,2,25',
+      role: 5325
+    })
+
+    const callArgs = mockFetch.mock.calls[0]
+    const body = JSON.parse(callArgs[1].body)
+    expect(body.user_ids).toBe('22,521,2,25')
+    expect(body.role).toBe(5325)
+  })
 })

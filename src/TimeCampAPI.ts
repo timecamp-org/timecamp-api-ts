@@ -7,6 +7,9 @@ import {
   UsersResource,
   TasksResource,
   TimeEntriesResource,
+  TagsResource,
+  BillingRatesResource,
+  GroupsResource,
 } from './resources';
 
 /**
@@ -34,6 +37,9 @@ export class TimeCampAPI {
   private _users: UsersResource;
   private _tasks: TasksResource;
   private _timeEntries: TimeEntriesResource;
+  private _tags: TagsResource;
+  private _billingRates: BillingRatesResource;
+  private _groups: GroupsResource;
 
   constructor(apiKey: string, config?: TimeCampAPIConfig) {
     this.httpClient = new HttpClient(apiKey, config);
@@ -45,6 +51,9 @@ export class TimeCampAPI {
     this._users = new UsersResource(this.httpClient, this._user);
     this._tasks = new TasksResource(this.httpClient, this._user);
     this._timeEntries = new TimeEntriesResource(this.httpClient);
+    this._tags = new TagsResource(this.httpClient);
+    this._billingRates = new BillingRatesResource(this.httpClient);
+    this._groups = new GroupsResource(this.httpClient);
   }
 
   /**
@@ -87,5 +96,26 @@ export class TimeCampAPI {
    */
   get timeEntries(): TimeEntriesResource {
     return this._timeEntries;
+  }
+
+  /**
+   * Tags and tag lists management
+   */
+  get tags(): TagsResource {
+    return this._tags;
+  }
+
+  /**
+   * Billing rates management
+   */
+  get billingRates(): BillingRatesResource {
+    return this._billingRates;
+  }
+
+  /**
+   * Groups management
+   */
+  get groups(): GroupsResource {
+    return this._groups;
   }
 }

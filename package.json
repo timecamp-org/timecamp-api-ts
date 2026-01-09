@@ -1,6 +1,6 @@
 {
   "name": "timecamp-api",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "description": "TypeScript client for TimeCamp API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

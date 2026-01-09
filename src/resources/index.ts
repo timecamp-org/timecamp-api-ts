@@ -7,3 +7,6 @@ export type { CreateCustomFieldPayload, UpdateCustomFieldPayload } from './Custo
 export { UsersResource } from './UsersResource';
 export { TasksResource } from './TasksResource';
 export { TimeEntriesResource } from './TimeEntriesResource';
+export { TagsResource } from './TagsResource';
+export { BillingRatesResource } from './BillingRatesResource';
+export { GroupsResource } from './GroupsResource';

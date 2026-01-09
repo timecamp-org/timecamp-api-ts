@@ -4,6 +4,7 @@ import {
   TimeCampTimeEntriesRequest,
   TimeCampCreateTimeEntryRequest,
   TimeCampCreateTimeEntryResponse,
+  TimeCampEntryTagsResponse,
 } from '../types';
 
 /**
@@ -97,6 +98,10 @@ export class TimeEntriesResource extends BaseResource {
         requestBody.billable = entry.billable;
       }
 
+      if (entry.tags !== undefined) {
+        requestBody.tags = entry.tags;
+      }
+
       const response = await this.makeRequest<any>('POST', 'entries', { json: requestBody });
 
       return {
@@ -167,5 +172,32 @@ export class TimeEntriesResource extends BaseResource {
         message: error instanceof Error ? error.message : 'Failed to delete time entry',
       };
     }
+  }
+
+  /**
+   * Get tags for time entries
+   */
+  async getTags(entryId: number): Promise<TimeCampEntryTagsResponse> {
+    return this.makeRequest<TimeCampEntryTagsResponse>('GET', `entries/${entryId}/tags`);
+  }
+
+  /**
+   * Add tags to time entry
+   */
+  async addTags(entryId: number, tagIds: number[]): Promise<string[]> {
+    const tags = tagIds.join(',');
+    return this.makeRequest<string[]>('PUT', `entries/${entryId}/tags`, {
+      json: { tags },
+    });
+  }
+
+  /**
+   * Remove tags from time entry
+   */
+  async removeTags(entryId: number, tagIds: number[]): Promise<string[]> {
+    const tags = tagIds.join(',');
+    return this.makeRequest<string[]>('DELETE', `entries/${entryId}/tags`, {
+      json: { tags },
+    });
   }
 }

@@ -225,6 +225,7 @@ export interface TimeCampCreateTimeEntryRequest {
   end_time: string;
   user_id?: number; //todo: only in create time entry
   billable?: boolean;
+  tags?: Array<{ tagId: number }>;
 }
 
 export interface TimeCampCreateTimeEntryResponse {
@@ -360,4 +361,137 @@ export interface TimeCampCreateTaskResponseData {
 
 export interface TimeCampCreateTaskResponse {
   [taskId: string]: TimeCampCreateTaskResponseData;
+}
+
+export interface TimeCampUpdateTaskRequest {
+  /** Task ID to update (required) */
+  task_id: number;
+  /** Task name */
+  name?: string;
+  /** Task parent ID */
+  parent_id?: number;
+  /** External task ID (e.g., ID from integration like Xero) */
+  external_task_id?: string;
+  /** External parent task ID (e.g., ID from integration like Xero) */
+  external_parent_id?: string;
+  /** Task budget value (defined in the unit specified by budget_unit) */
+  budgeted?: number;
+  /** Task description/note */
+  note?: string;
+  /** Is task archived (0 = active, 1 = archived) */
+  archived?: 0 | 1;
+  /** Is task billable (0 = non-billable, 1 = billable) */
+  billable?: 0 | 1;
+  /** Budget unit: 'hours' for time, 'fee' for fixed price, empty string for no budget */
+  budget_unit?: 'hours' | 'fee' | '';
+  /** Comma-separated user IDs to update role in task (e.g., "22,521,2,25") */
+  user_ids?: string;
+  /** Role ID to assign to users if user_ids is provided */
+  role?: number;
+  /** Task keywords (comma-separated, e.g., "IT, R&D") */
+  keywords?: string;
+  /** @deprecated Use keywords instead. Comma-separated tag names */
+  tags?: string;
+}
+
+// Tags types
+export interface TimeCampTagItem {
+  id: number;
+  name: string;
+  archived: number;
+  tagListId?: number;
+  hasGroupRestrictions?: number;
+}
+
+export interface TimeCampTagList {
+  id: number;
+  name: string;
+  archived: number;
+}
+
+export interface TimeCampTagListWithTags extends TimeCampTagList {
+  tags: {
+    [tagId: string]: TimeCampTagItem;
+  };
+}
+
+export interface TimeCampTagListsResponse {
+  [tagListId: string]: TimeCampTagList;
+}
+
+export interface TimeCampCreateTagRequest {
+  list: number;
+  name: string;
+}
+
+export interface TimeCampUpdateTagRequest {
+  name?: string;
+  archived?: 0 | 1;
+}
+
+export interface TimeCampCreateTagListRequest {
+  name: string;
+}
+
+export interface TimeCampUpdateTagListRequest {
+  name?: string;
+  archived?: 0 | 1;
+}
+
+export interface TimeCampGetTagListsOptions {
+  task_id?: number;
+  archived?: 0 | 1;
+  tags?: 0 | 1;
+  exclude_empty_tag_lists?: 0 | 1;
+  use_restrictions?: 0 | 1;
+}
+
+export interface TimeCampEntryTagsResponse {
+  [entryId: string]: TimeCampTag[];
+}
+
+// Billing Rates types
+export interface TimeCampBillingRate {
+  rateId: number;
+  rateTypeId: number;
+  value: string;
+  refType: string;
+  addDate: string;
+  refId: string;
+}
+
+export interface TimeCampSetRateRequest {
+  rateTypeId: number;
+  value: number;
+  addDate?: string;
+}
+
+export interface TimeCampBillingRatesResponse {
+  [resourceId: string]: TimeCampBillingRate[];
+}
+
+// Groups types
+export interface TimeCampGroup {
+  group_id: number;
+  name: string;
+  parent_id: number;
+  admin_id?: number;
+  root_group_id?: number;
+}
+
+export interface TimeCampCreateGroupRequest {
+  name: string;
+  parent_id?: number;
+}
+
+export interface TimeCampUpdateGroupRequest {
+  group_id: number;
+  name?: string;
+  parent_id?: number;
+}
+
+export interface TimeCampGroupsResponse {
+  group_id: number;
+  name: string;
+  parent_id: number;
 }

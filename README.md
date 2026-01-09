@@ -54,6 +54,19 @@ console.log(favourites.data.favourites);
 await timecampApi.tasks.addFavorite(77390460);
 await timecampApi.tasks.removeFavorite(77189336);
 
+// Update a task and assign users
+await timecampApi.tasks.update({
+  task_id: 12345,
+  name: 'Updated Task Name',
+  user_ids: '100,200,300', // Comma-separated user IDs
+  role: 5 // Role ID to assign
+});
+
+// Tags and Tag Lists
+const tagLists = await timecampApi.tags.getTagLists();
+const tagListId = await timecampApi.tags.createTagList({ name: 'Project Types' });
+const tagId = await timecampApi.tags.createTag({ list: tagListId, name: 'Development' });
+
 // Timer operations
 const timerStatus = await timecampApi.timer.status();
 const startedTimer = await timecampApi.timer.start();
@@ -70,8 +83,14 @@ const newEntry = await timecampApi.timeEntries.create({
   duration: 3600, // 1 hour in seconds
   description: 'Working on API integration',
   start_time: '09:00:00',
-  end_time: '10:00:00'
+  end_time: '10:00:00',
+  tags: [{ tagId: 1 }, { tagId: 4 }] // Optional tags
 });
+
+// Manage tags on time entries
+const entryTags = await timecampApi.timeEntries.getTags(entryId);
+await timecampApi.timeEntries.addTags(entryId, [5, 6]);
+await timecampApi.timeEntries.removeTags(entryId, [4]);
 
 const updatedEntry = await timecampApi.timeEntries.update(entryId, {
   description: 'Updated description',
@@ -79,6 +98,17 @@ const updatedEntry = await timecampApi.timeEntries.update(entryId, {
 });
 
 const deleteResult = await timecampApi.timeEntries.delete(entryId);
+
+// Billing Rates
+await timecampApi.billingRates.setTaskRate(12345, { rateTypeId: 1, value: 150 });
+await timecampApi.billingRates.setUserRate(100, { rateTypeId: 1, value: 100 });
+await timecampApi.billingRates.setTaskUserRate(12345, 100, { rateTypeId: 1, value: 175 });
+const taskRates = await timecampApi.billingRates.getTaskRates(12345);
+
+// Groups
+const groups = await timecampApi.groups.getAll();
+const newGroup = await timecampApi.groups.create({ name: 'Development Team', parent_id: 123 });
+await timecampApi.groups.update({ group_id: newGroup.group_id, name: 'Dev Team' });
 ```
 
 ## API
@@ -110,9 +140,18 @@ new TimeCampAPI(apiKey: string, config?: TimeCampAPIConfig)
 | `tasks.getAll()` | Get every task including archived | None | `Promise<TasksAPIResponse>` |
 | `tasks.getActiveUserTasks(options?: GetActiveUserTasksOptions)` | Get all non-archived tasks | `options`: `{ user?: string; includeFullBreadcrumb?: boolean; }` | `Promise<TasksAPIResponse>` |
 | `tasks.add(params)` | Create a new task | `params: TimeCampCreateTaskRequest` | `Promise<TimeCampCreateTaskResponse>` |
+| `tasks.update(params)` | Update an existing task | `params: TimeCampUpdateTaskRequest` | `Promise<TimeCampCreateTaskResponse>` |
 | `tasks.getFavorites()` | Fetch task picker favourites and suggestions | None | `Promise<TimeCampTaskFavoritesResponse>` |
 | `tasks.addFavorite(taskId)` | Mark a task as favourite for the picker | `taskId: number` | `Promise<TimeCampTaskFavoriteMutationResponse>` |
 | `tasks.removeFavorite(taskId)` | Remove a task from favourites | `taskId: number` | `Promise<TimeCampTaskFavoriteMutationResponse>` |
+| `tags.getTagLists(options?)` | Get all tag lists | `options?: TimeCampGetTagListsOptions` | `Promise<TimeCampTagListsResponse>` |
+| `tags.getTagList(tagListId)` | Get specific tag list with tags | `tagListId: number` | `Promise<TimeCampTagListWithTags>` |
+| `tags.createTagList(params)` | Create new tag list | `params: { name: string }` | `Promise<number>` |
+| `tags.updateTagList(tagListId, params)` | Update tag list | `tagListId: number, params: { name?, archived? }` | `Promise<{ message: string }>` |
+| `tags.getTagListTags(tagListId)` | Get only tags from tag list | `tagListId: number` | `Promise<{ [tagId: string]: TimeCampTagItem }>` |
+| `tags.createTag(params)` | Create new tag | `params: { list: number, name: string }` | `Promise<number>` |
+| `tags.getTag(tagId)` | Get tag data | `tagId: number` | `Promise<TimeCampTagItem>` |
+| `tags.updateTag(tagId, params)` | Update tag | `tagId: number, params: { name?, archived? }` | `Promise<{ message: string }>` |
 | `timer.start()` | Start a new timer | `data?: TimerStartRequest` | `Promise<any>` |
 | `timer.stop()` | Stop the currently running timer | `data?: TimerStopRequest` | `Promise<any>` |
 | `timer.status()` | Get the current timer status | None | `Promise<any>` |
@@ -120,6 +159,21 @@ new TimeCampAPI(apiKey: string, config?: TimeCampAPIConfig)
 | `timeEntries.create()` | Create a new time entry | `entry: TimeCampCreateTimeEntryRequest` | `Promise<TimeCampCreateTimeEntryResponse>` |
 | `timeEntries.update()` | Update an existing time entry | `id: number, data: Partial<TimeCampCreateTimeEntryRequest>` | `Promise<TimeCampCreateTimeEntryResponse>` |
 | `timeEntries.delete()` | Delete a time entry | `id: number` | `Promise<{success: boolean, message: string}>` |
+| `timeEntries.getTags(entryId)` | Get tags for time entry | `entryId: number` | `Promise<TimeCampEntryTagsResponse>` |
+| `timeEntries.addTags(entryId, tagIds)` | Add tags to time entry | `entryId: number, tagIds: number[]` | `Promise<string[]>` |
+| `timeEntries.removeTags(entryId, tagIds)` | Remove tags from time entry | `entryId: number, tagIds: number[]` | `Promise<string[]>` |
+| `billingRates.getTaskRates(taskId, rateTypeId?)` | Get billing rates for task | `taskId: number, rateTypeId?: string` | `Promise<TimeCampBillingRatesResponse>` |
+| `billingRates.setTaskRate(taskId, data)` | Set/update task billing rate | `taskId: number, data: TimeCampSetRateRequest` | `Promise<TimeCampBillingRate>` |
+| `billingRates.getUserRates(userId, rateTypeId?)` | Get billing rates for user | `userId: number, rateTypeId?: string` | `Promise<TimeCampBillingRatesResponse>` |
+| `billingRates.setUserRate(userId, data)` | Set/update user billing rate | `userId: number, data: TimeCampSetRateRequest` | `Promise<TimeCampBillingRate>` |
+| `billingRates.getTaskUserRates(taskId, userId, rateTypeId?)` | Get task-user billing rates | `taskId: number, userId: number, rateTypeId?: string` | `Promise<TimeCampBillingRatesResponse>` |
+| `billingRates.setTaskUserRate(taskId, userId, data)` | Set/update task-user rate | `taskId: number, userId: number, data: TimeCampSetRateRequest` | `Promise<TimeCampBillingRate>` |
+| `billingRates.getGroupRates(groupId, rateTypeId?)` | Get billing rates for group | `groupId: number, rateTypeId?: string` | `Promise<TimeCampBillingRatesResponse>` |
+| `billingRates.setGroupRate(groupId, data)` | Set/update group billing rate | `groupId: number, data: TimeCampSetRateRequest` | `Promise<TimeCampBillingRate>` |
+| `groups.getAll()` | Get all groups | None | `Promise<TimeCampGroupsResponse[]>` |
+| `groups.create(params)` | Create a new group | `params: { name: string, parent_id?: number }` | `Promise<TimeCampGroup>` |
+| `groups.update(params)` | Update an existing group | `params: { group_id: number, name?, parent_id? }` | `Promise<void>` |
+| `groups.delete(groupId)` | Delete a group | `groupId: number` | `Promise<void>` |
 
 #### `user.get()`
 
@@ -294,6 +348,60 @@ const taskData = task[taskId];
 console.log(`Created task: ${taskData.name} (ID: ${taskData.task_id})`);
 ```
 
+#### `tasks.update(params: TimeCampUpdateTaskRequest)`
+
+Update an existing task. This method supports all the same parameters as `tasks.add()` and is particularly useful for assigning users to tasks.
+
+**Parameters**:
+- `params`: Task update parameters
+  - `task_id`: Task ID to update (required)
+  - `name`: Task name (optional)
+  - `parent_id`: Parent task ID (optional)
+  - `user_ids`: Comma-separated user IDs to assign to task (optional, e.g., "22,521,2,25")
+  - `role`: Role ID to assign to users if user_ids is provided (optional)
+  - All other parameters from `tasks.add()` are also supported
+
+**Returns**: `Promise<TimeCampCreateTaskResponse>`
+
+```typescript
+interface TimeCampUpdateTaskRequest {
+  task_id: number; // required
+  name?: string;
+  parent_id?: number;
+  user_ids?: string; // Comma-separated user IDs
+  role?: number; // Role ID for assigned users
+  // ... all other optional parameters from TimeCampCreateTaskRequest
+}
+```
+
+**Example**:
+
+```typescript
+// Update task name
+await api.tasks.update({
+  task_id: 12345,
+  name: 'Updated Task Name'
+});
+
+// Assign users to a task
+await api.tasks.update({
+  task_id: 12345,
+  user_ids: '100,200,300', // Assign users 100, 200, and 300
+  role: 5 // Assign them role ID 5
+});
+
+// Update multiple properties including user assignment
+await api.tasks.update({
+  task_id: 12345,
+  name: 'Development Sprint 1',
+  user_ids: '100,200',
+  role: 5,
+  billable: 1,
+  budgeted: 40,
+  budget_unit: 'hours'
+});
+```
+
 #### `users.getAll()`
 
 List all users visible to the authenticated account.
@@ -404,6 +512,250 @@ await timecampApi.tasks.byId(456).deleteCustomField(66)
 
 // Time Entries
 await timecampApi.timeEntries.byId(789).getAllCustomFields()
+```
+
+### Tags and Tag Lists
+
+Manage tags and tag lists for organizing time entries.
+
+#### Tag Lists
+
+```typescript
+// Get all tag lists
+const tagLists = await timecampApi.tags.getTagLists();
+
+// Get tag lists with options
+const tagLists = await timecampApi.tags.getTagLists({
+  archived: 0, // Exclude archived
+  tags: 1, // Include tags in response
+  exclude_empty_tag_lists: 1 // Exclude empty tag lists
+});
+
+// Get specific tag list with all its tags
+const tagList = await timecampApi.tags.getTagList(8);
+console.log(tagList.name); // "My tag list"
+console.log(tagList.tags); // Object with tag IDs as keys
+
+// Create a new tag list
+const tagListId = await timecampApi.tags.createTagList({
+  name: 'Project Types'
+});
+
+// Update a tag list
+await timecampApi.tags.updateTagList(tagListId, {
+  name: 'Updated Tag List Name',
+  archived: 0
+});
+
+// Get only the tags from a tag list (without tag list details)
+const tags = await timecampApi.tags.getTagListTags(8);
+```
+
+#### Tags
+
+```typescript
+// Create a new tag in a tag list
+const tagId = await timecampApi.tags.createTag({
+  list: 52, // Tag list ID
+  name: 'Development'
+});
+
+// Get tag details
+const tag = await timecampApi.tags.getTag(13);
+console.log(tag.name); // "Development"
+console.log(tag.tagListId); // "52"
+
+// Update a tag
+await timecampApi.tags.updateTag(13, {
+  name: 'Backend Development',
+  archived: 0
+});
+```
+
+### Tags on Time Entries
+
+Add, retrieve, and remove tags from time entries.
+
+```typescript
+// Create time entry with tags
+const entry = await timecampApi.timeEntries.create({
+  date: '2024-01-09',
+  duration: 3600,
+  start_time: '09:00',
+  end_time: '10:00',
+  description: 'Development work',
+  task_id: 12345,
+  tags: [
+    { tagId: 1 },
+    { tagId: 4 }
+  ]
+});
+
+// Get tags for a time entry
+const entryTags = await timecampApi.timeEntries.getTags(101434259);
+// Returns: { '101434259': [{ tagListName, tagListId, tagId, name, mandatory }] }
+
+// Add tags to an existing time entry
+await timecampApi.timeEntries.addTags(101434259, [13, 14]);
+// Returns: ['13'] (IDs of successfully added tags)
+
+// Remove tags from time entry
+await timecampApi.timeEntries.removeTags(101434259, [15]);
+// Returns: ['15'] (IDs of successfully removed tags)
+```
+
+### Billing Rates
+
+Manage billing rates for tasks, users, groups, and task-user combinations.
+
+#### Task Rates
+
+```typescript
+// Get all billing rates for a task
+const taskRates = await timecampApi.billingRates.getTaskRates(12345);
+// Returns: { '12345': [{ rateId, rateTypeId, value, refType, addDate, refId }] }
+
+// Get specific rate type for a task
+const taskRates = await timecampApi.billingRates.getTaskRates(12345, '1,2'); // Comma-separated rate type IDs
+
+// Set or update a task billing rate
+const rate = await timecampApi.billingRates.setTaskRate(12345, {
+  rateTypeId: 1,
+  value: 150,
+  addDate: '2024-01-09' // Optional
+});
+```
+
+#### User Rates
+
+```typescript
+// Get all billing rates for a user
+const userRates = await timecampApi.billingRates.getUserRates(100);
+
+// Set or update a user billing rate
+const rate = await timecampApi.billingRates.setUserRate(100, {
+  rateTypeId: 1,
+  value: 100
+});
+```
+
+#### Task-User Rates (Specific Override)
+
+Task-user rates override both task and user rates for a specific user on a specific task.
+
+```typescript
+// Get task-user specific rates
+const taskUserRates = await timecampApi.billingRates.getTaskUserRates(12345, 100);
+
+// Set task-user specific rate (overrides task and user rates)
+const rate = await timecampApi.billingRates.setTaskUserRate(12345, 100, {
+  rateTypeId: 1,
+  value: 175 // Higher rate for this user on this specific task
+});
+```
+
+#### Group Rates
+
+```typescript
+// Get all billing rates for a group
+const groupRates = await timecampApi.billingRates.getGroupRates(50);
+
+// Set or update a group billing rate
+const rate = await timecampApi.billingRates.setGroupRate(50, {
+  rateTypeId: 1,
+  value: 125
+});
+```
+
+**Billing Rate Types**:
+```typescript
+interface TimeCampSetRateRequest {
+  rateTypeId: number; // Rate type identifier
+  value: number; // Rate value (e.g., hourly rate)
+  addDate?: string; // Optional date in YYYY-MM-DD format
+}
+
+interface TimeCampBillingRate {
+  rateId: number;
+  rateTypeId: number;
+  value: string;
+  refType: string; // 'task', 'user', 'task_user', or 'group'
+  addDate: string;
+  refId: string;
+}
+```
+
+### Groups
+
+Manage groups (departments, teams) in your TimeCamp organization.
+
+```typescript
+// Get all groups
+const groups = await timecampApi.groups.getAll();
+console.log(groups); // [{ group_id: 530222, name: 'People', parent_id: 0 }]
+
+// Create a new group under a parent
+const newGroup = await timecampApi.groups.create({
+  name: 'Development Team',
+  parent_id: 530222
+});
+console.log(newGroup.group_id); // 390673
+console.log(newGroup.root_group_id); // 530222
+
+// Create a root group (parent_id defaults to 0 if not provided)
+const rootGroup = await timecampApi.groups.create({
+  name: 'New Organization'
+});
+
+// Update a group's name
+await timecampApi.groups.update({
+  group_id: 390673,
+  name: 'Backend Development'
+});
+
+// Move a group to a different parent
+await timecampApi.groups.update({
+  group_id: 390673,
+  parent_id: 123456 // New parent group ID
+});
+
+// Update both name and parent
+await timecampApi.groups.update({
+  group_id: 390673,
+  name: 'Backend Team',
+  parent_id: 123456
+});
+
+// Delete a group
+await timecampApi.groups.delete(390673);
+```
+
+**Important Notes**:
+- Maximum group tree depth is 4 levels
+- Root groups have `parent_id = 0` (there can only be one root group)
+- When a group is deleted, all its subgroups are moved to the root group
+- Root groups cannot be deleted
+
+**Group Types**:
+```typescript
+interface TimeCampCreateGroupRequest {
+  name: string; // Group name (required)
+  parent_id?: number; // Parent group ID (optional, defaults to 0 for root)
+}
+
+interface TimeCampGroup {
+  group_id: number;
+  name: string;
+  parent_id: number;
+  admin_id?: number;
+  root_group_id?: number;
+}
+
+interface TimeCampUpdateGroupRequest {
+  group_id: number; // Group ID to update (required)
+  name?: string; // New name (optional)
+  parent_id?: number; // New parent ID (optional)
+}
 ```
 
 
@@ -551,10 +903,13 @@ Create a new time entry.
 interface TimeCampCreateTimeEntryRequest {
   date: string;
   duration: number; // in seconds
-  task_id?: string;
+  task_id?: number;
   description?: string;
   start_time: string;
   end_time: string;
+  user_id?: number;
+  billable?: boolean;
+  tags?: Array<{ tagId: number }>; // Optional tags to add on creation
 }
 
 interface TimeCampCreateTimeEntryResponse {
@@ -586,6 +941,15 @@ Delete a time entry.
 ## API Reference
 
 Based on the [TimeCamp API documentation](https://developer.timecamp.com/).
+
+## Recent Updates
+
+### Version 1.7.0
+- ✅ Added `tasks.update()` method for updating tasks and assigning users
+- ✅ Added complete tags and tag lists management (`tags.*` methods)
+- ✅ Added tag support for time entries (create with tags, add/remove tags)
+- ✅ Added billing rates management for tasks, users, groups, and task-user combinations
+- ✅ Added groups management (`groups.getAll()`, `groups.create()`, `groups.update()`, `groups.delete()`)
 
 ## Not Yet Implemented
 
