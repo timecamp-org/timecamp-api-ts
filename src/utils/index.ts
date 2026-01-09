@@ -1,0 +1,1 @@
+export { formatTimeCampDate } from './date';
