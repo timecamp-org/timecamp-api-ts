@@ -470,6 +470,12 @@ export interface TimeCampBillingRatesResponse {
   [resourceId: string]: TimeCampBillingRate[];
 }
 
+export interface TimeCampRateType {
+  rateTypeId: number;
+  name: string;
+  isCost: boolean;
+}
+
 // Groups types
 export interface TimeCampGroup {
   group_id: number;

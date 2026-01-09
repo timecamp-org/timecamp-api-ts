@@ -172,6 +172,7 @@ new TimeCampAPI(apiKey: string, config?: TimeCampAPIConfig)
 | `billingRates.setTaskUserRate(taskId, userId, data)` | Set/update task-user rate | `taskId: number, userId: number, data: TimeCampSetRateRequest` | `Promise<TimeCampBillingRate>` |
 | `billingRates.getGroupRates(groupId, rateTypeId?)` | Get billing rates for group | `groupId: number, rateTypeId?: string` | `Promise<TimeCampBillingRatesResponse>` |
 | `billingRates.setGroupRate(groupId, data)` | Set/update group billing rate | `groupId: number, data: TimeCampSetRateRequest` | `Promise<TimeCampBillingRate>` |
+| `billingRates.getRateTypes()` | Get all rate types (Internal API) | None | `Promise<TimeCampRateType[]>` |
 | `groups.getAll()` | Get all groups | None | `Promise<TimeCampGroupsResponse[]>` |
 | `groups.create(params)` | Create a new group | `params: { name: string, parent_id?: number }` | `Promise<TimeCampGroup>` |
 | `groups.update(params)` | Update an existing group | `params: { group_id: number, name?, parent_id? }` | `Promise<void>` |
@@ -669,6 +670,15 @@ const rate = await timecampApi.billingRates.setGroupRate(50, {
 });
 ```
 
+#### Rate Types (Internal API)
+
+Warning: This is an undocumented internal API method.
+
+```typescript
+// Get all rate types
+const rateTypes = await timecampApi.billingRates.getRateTypes();
+```
+
 **Billing Rate Types**:
 ```typescript
 interface TimeCampSetRateRequest {
@@ -684,6 +694,12 @@ interface TimeCampBillingRate {
   refType: string; // 'task', 'user', 'task_user', or 'group'
   addDate: string;
   refId: string;
+}
+
+interface TimeCampRateType {
+  rateTypeId: number;
+  name: string;
+  isCost: boolean;
 }
 ```
 
