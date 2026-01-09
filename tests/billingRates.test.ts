@@ -226,4 +226,24 @@ describe('Billing Rates API', () => {
       );
     });
   });
+
+  describe('Rate Types', () => {
+    it('billingRates.getRateTypes fetches all rate types', async () => {
+      const mockResponse = [
+        {
+          id: 1,
+          name: 'Regular',
+        },
+      ];
+      mockFetch.mockResolvedValueOnce(createMockResponse(mockResponse));
+
+      const result = await api.billingRates.getRateTypes();
+
+      expect(result).toEqual(mockResponse);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/internal/api/rate_type'),
+        expect.objectContaining({ method: 'GET' })
+      );
+    });
+  });
 });

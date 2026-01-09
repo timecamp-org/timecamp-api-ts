@@ -136,4 +136,12 @@ export class BillingRatesResource extends BaseResource {
       json: requestBody,
     });
   }
+
+  /**
+   * Get all rate types
+   * Warning: This is an undocumented internal API method
+   */
+  async getRateTypes(): Promise<any> {
+    return this.makeRequest<any>('GET', '../../internal/api/rate_type');
+  }
 }
