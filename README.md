@@ -2,6 +2,8 @@
 
 A TypeScript client library for the TimeCamp API.
 
+Source code: https://github.com/timecamp-org/timecamp-api-ts
+
 ## Installation
 
 ```bash
