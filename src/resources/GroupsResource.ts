@@ -1,4 +1,5 @@
 import { BaseResource } from './BaseResource';
+import { TimeCampAPIError } from '../client';
 import {
   TimeCampGroup,
   TimeCampCreateGroupRequest,
@@ -38,7 +39,26 @@ export class GroupsResource extends BaseResource {
       requestBody.parent_id = params.parent_id;
     }
 
-    const response = await this.makeRequest<any>('PUT', 'group', { json: requestBody });
+    let response: any;
+    const maxRetries = 4;
+    const retryDelay = 10000;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        response = await this.makeRequest<any>('PUT', 'group', { json: requestBody });
+        break;
+      } catch (error) {
+        if (
+          error instanceof TimeCampAPIError &&
+          error.status === 403 &&
+          attempt < maxRetries
+        ) {
+          await new Promise((resolve) => setTimeout(resolve, retryDelay));
+          continue;
+        }
+        throw error;
+      }
+    }
 
     return {
       group_id:

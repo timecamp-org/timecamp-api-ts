@@ -147,4 +147,40 @@ describe('Groups API', () => {
       })
     );
   });
+
+  it('groups.create retries on 403 error', async () => {
+    jest.useFakeTimers();
+    
+    mockFetch
+      .mockResolvedValueOnce(createMockResponse({ error: 'Forbidden' }, 403))
+      .mockResolvedValueOnce(createMockResponse({ error: 'Forbidden' }, 403))
+      .mockResolvedValueOnce(createMockResponse({ error: 'Forbidden' }, 403))
+      .mockResolvedValueOnce(createMockResponse({ error: 'Forbidden' }, 403))
+      .mockResolvedValueOnce(
+        createMockResponse({
+            group_id: '390673',
+            name: 'Name of New Group',
+            admin_id: '0',
+            parent_id: '390672',
+            root_group_id: '390672',
+          })
+      );
+
+    const promise = api.groups.create({
+      name: 'Name of New Group',
+      parent_id: 390672,
+    });
+
+    for (let i = 0; i < 10; i++) {
+        for(let k=0; k<50; k++) await Promise.resolve();
+        jest.advanceTimersByTime(10000);
+    }
+    
+    const result = await promise;
+
+    expect(result.group_id).toBe(390673);
+    expect(mockFetch).toHaveBeenCalledTimes(5);
+    
+    jest.useRealTimers();
+  }, 10000);
 });
