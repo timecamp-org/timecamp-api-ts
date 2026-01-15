@@ -34,7 +34,7 @@ describe('Users API', () => {
       }
     }
     
-    // Mock the invite call, users.getAll call, and display name update call
+    // Mock the invite call, group users call, and display name update call
     mockFetch
       .mockResolvedValueOnce(createMockResponse(mockInviteResponse))
       .mockResolvedValueOnce(createMockResponse(mockUsersResponse))
@@ -58,9 +58,9 @@ describe('Users API', () => {
       })
     )
     
-    // Verify users.getAll call
+    // Verify group users call
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining('/users'),
+      expect.stringContaining('/group/123/user'),
       expect.objectContaining({ method: 'GET' })
     )
     
@@ -85,8 +85,17 @@ describe('Users API', () => {
         } 
       } 
     }
+    const mockUsersResponse = {
+      '123': {
+        user_id: '123',
+        email: 'test@example.com',
+        display_name: 'Test User'
+      }
+    }
     
-    mockFetch.mockResolvedValueOnce(createMockResponse(mockInviteResponse))
+    mockFetch
+      .mockResolvedValueOnce(createMockResponse(mockInviteResponse))
+      .mockResolvedValueOnce(createMockResponse(mockUsersResponse))
 
     const res = await api.users.invite({
       email: 'test@example.com',
@@ -94,13 +103,17 @@ describe('Users API', () => {
     })
 
     expect(res.statuses['test@example.com'].status).toBe('Invite')
-    expect(res.user_id).toBeUndefined()
+    expect(res.user_id).toBe('123')
     
-    // Should only make the invite call, not the users.getAll or update calls
-    expect(mockFetch).toHaveBeenCalledTimes(1)
+    // Should make invite and group users calls, but not the update call
+    expect(mockFetch).toHaveBeenCalledTimes(2)
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/group/123/user'),
       expect.objectContaining({ method: 'POST' })
+    )
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/group/123/user'),
+      expect.objectContaining({ method: 'GET' })
     )
   })
 
@@ -128,7 +141,7 @@ describe('Users API', () => {
       }
     }
 
-    // Mock user.get, invite, users.getAll, and display name update
+    // Mock user.get, invite, group users, and display name update
     mockFetch
       .mockResolvedValueOnce(createMockResponse(mockUserData))
       .mockResolvedValueOnce(createMockResponse(mockInviteResponse))
@@ -169,6 +182,13 @@ describe('Users API', () => {
         } 
       } 
     }
+    const mockUsersResponse = {
+      '555': {
+        user_id: '555',
+        email: 'newuser@example.com',
+        display_name: 'New User'
+      }
+    }
     
     const create429Response = () => ({
       ok: false,
@@ -181,6 +201,7 @@ describe('Users API', () => {
       .mockResolvedValueOnce(create429Response())
       .mockResolvedValueOnce(create429Response())
       .mockResolvedValueOnce(createMockResponse(mockInviteResponse))
+      .mockResolvedValueOnce(createMockResponse(mockUsersResponse))
 
     const invitePromise = api.users.invite({
       email: 'newuser@example.com',
@@ -192,9 +213,9 @@ describe('Users API', () => {
 
     const res = await invitePromise
 
-    expect(res).toEqual(mockInviteResponse)
     expect(res.statuses['newuser@example.com'].status).toBe('Invite')
-    expect(mockFetch).toHaveBeenCalledTimes(3) // 2 failures + 1 success
+    expect(res.user_id).toBe('555')
+    expect(mockFetch).toHaveBeenCalledTimes(4) // 2 failures + 1 success + users.getAll
 
     jest.useRealTimers()
   })

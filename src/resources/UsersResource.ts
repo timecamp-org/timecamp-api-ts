@@ -6,6 +6,7 @@ import {
   TimeCampUserInviteRequest,
   TimeCampUserInviteResponse,
   TimeCampCustomFieldValuesResponse,
+  TimeCampGroupUsersResponse,
 } from '../types';
 
 /**
@@ -95,49 +96,57 @@ export class UsersResource extends BaseResource {
       }
     );
 
-    // If name is provided and invite was successful, update the user's display name
-    if (name && inviteResponse.statuses[email]?.status) {
-      try {
-        let userId: string | undefined;
-        const maxAttempts = 10;
-        const retryDelay = 2000;
+    let userId: string | undefined;
+    const maxAttempts = 10;
+    const retryDelay = 2000;
 
-        for (let attempt = 0; attempt < maxAttempts; attempt++) {
-          if (attempt > 0) {
-            await new Promise((resolve) => setTimeout(resolve, retryDelay));
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      if (attempt > 0) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+      }
+
+      const usersResponse = await this.makeRequest<TimeCampGroupUsersResponse>(
+        'GET',
+        `group/${targetGroupId}/user`
+      );
+      const usersArray: TimeCampGroupUsersResponse = Array.isArray(usersResponse)
+        ? usersResponse
+        : (Object.values(usersResponse || {}) as TimeCampGroupUsersResponse);
+
+      for (const user of usersArray) {
+        if (user?.email === email) {
+          const rawUserId = user.user_id ?? user.id;
+          if (rawUserId !== undefined && rawUserId !== null) {
+            userId = String(rawUserId);
           }
-
-          const usersMap = await this.getAll();
-
-          for (const key in usersMap) {
-            const user = usersMap[key];
-            if (user.email === email) {
-              userId = user.user_id || user.id;
-              break;
-            }
-          }
-
           if (userId) {
             break;
           }
         }
-
-        if (userId) {
-          await this.makeRequest('POST', 'user', {
-            formData: {
-              display_name: name,
-              user_id: userId,
-            },
-            retryOn429: true,
-            maxRetries: 3,
-            retryDelay: 5000,
-          });
-
-          inviteResponse.user_id = userId;
-        }
-      } catch {
-        // Silent fail to not break the invite flow
       }
+
+      if (userId) {
+        break;
+      }
+    }
+
+    if (!userId) {
+      throw new Error(`Unable to resolve user_id for invited user ${email}.`);
+    }
+
+    inviteResponse.user_id = userId;
+
+    // If name is provided and invite was successful, update the user's display name
+    if (name && inviteResponse.statuses[email]?.status) {
+      await this.makeRequest('POST', 'user', {
+        formData: {
+          display_name: name,
+          user_id: userId,
+        },
+        retryOn429: true,
+        maxRetries: 6,
+        retryDelay: 5000,
+      });
     }
 
     return inviteResponse;

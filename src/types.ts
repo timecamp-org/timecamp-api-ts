@@ -7,6 +7,17 @@ export interface TimeCampUser {
   root_group_id: string;
 }
 
+export interface TimeCampGroupUser {
+  group_id?: string;
+  user_id?: string | number;
+  id?: string | number;
+  email?: string;
+  display_name?: string;
+  [key: string]: unknown;
+}
+
+export type TimeCampGroupUsersResponse = TimeCampGroupUser[];
+
 export interface TimeCampAPIConfig {
   baseURL?: string;
   timeout?: number;
@@ -298,7 +309,7 @@ export interface TimeCampUserInviteResponse {
       status: string; // e.g., "Invite", "Already exists", etc.
     };
   };
-  user_id?: string; // Populated only when 'name' parameter is provided and user is successfully found
+  user_id: string; // Resolved after invite, regardless of display name update
 }
 
 export interface TimeCampCreateTaskRequest {

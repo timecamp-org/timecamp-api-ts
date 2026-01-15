@@ -413,7 +413,7 @@ Returns: `Promise<Record<string, any>>`
 
 #### `users.invite(params: TimeCampUserInviteRequest)`
 
-Invite a user to your TimeCamp account. When a `name` parameter is provided, the method will automatically update the user's display name after the invite is successful.
+Invite a user to your TimeCamp account. The method resolves and returns the invited user's `user_id`, and when a `name` parameter is provided it will also update the user's display name after the invite is successful.
 
 **Parameters**:
 - `params`: User invitation parameters
@@ -425,13 +425,13 @@ Invite a user to your TimeCamp account. When a `name` parameter is provided, the
 
 **Retry Behavior**: This method automatically retries up to 3 times with a 5-second delay when encountering a 429 (rate limit) error.
 
-**Display Name Update**: When a `name` is provided, the method will:
+**User ID Resolution & Display Name Update**: The method will:
 1. Send the invitation
-2. Poll the user list (up to 10 times with 2-second delays) to find the new user's ID
-3. Make an additional POST request to `api/user` with form-encoded data to update the user's display name
+2. Poll the group user list (up to 10 times with 2-second delays) to find the new user's ID
+3. If a `name` is provided, make an additional POST request to `api/user` with form-encoded data to update the user's display name
 4. Return the response with the `user_id` included
 
-Note: There is typically a 2-4 second delay between when the invite succeeds and when the user appears in the users list, which is why the method includes retry logic.
+Note: There is typically a 2-4 second delay between when the invite succeeds and when the user appears in the group user list, which is why the method includes retry logic. If the user ID cannot be resolved after retries, the method throws an error.
 
 ```typescript
 interface TimeCampUserInviteRequest {
@@ -446,7 +446,7 @@ interface TimeCampUserInviteResponse {
       status: string; // e.g., "Invite", "Already exists", etc.
     };
   };
-  user_id?: string; // Included when name is provided and update succeeds
+  user_id: string; // Always included after the user is resolved
 }
 ```
 
