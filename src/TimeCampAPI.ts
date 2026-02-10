@@ -10,6 +10,8 @@ import {
   TagsResource,
   BillingRatesResource,
   GroupsResource,
+  InvoicesResource,
+  ClientsResource,
 } from './resources';
 
 /**
@@ -40,6 +42,8 @@ export class TimeCampAPI {
   private _tags: TagsResource;
   private _billingRates: BillingRatesResource;
   private _groups: GroupsResource;
+  private _invoices: InvoicesResource;
+  private _clients: ClientsResource;
 
   constructor(apiKey: string, config?: TimeCampAPIConfig) {
     this.httpClient = new HttpClient(apiKey, config);
@@ -54,6 +58,8 @@ export class TimeCampAPI {
     this._tags = new TagsResource(this.httpClient);
     this._billingRates = new BillingRatesResource(this.httpClient);
     this._groups = new GroupsResource(this.httpClient);
+    this._invoices = new InvoicesResource(this.httpClient);
+    this._clients = new ClientsResource(this.httpClient);
   }
 
   /**
@@ -117,5 +123,19 @@ export class TimeCampAPI {
    */
   get groups(): GroupsResource {
     return this._groups;
+  }
+
+  /**
+   * Invoices management
+   */
+  get invoices(): InvoicesResource {
+    return this._invoices;
+  }
+
+  /**
+   * Clients management (for invoicing)
+   */
+  get clients(): ClientsResource {
+    return this._clients;
   }
 }

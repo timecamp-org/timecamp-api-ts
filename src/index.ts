@@ -12,6 +12,8 @@ export {
   UsersResource,
   TasksResource,
   TimeEntriesResource,
+  InvoicesResource,
+  ClientsResource,
 } from './resources';
 export type { ResourceCustomFieldsAPI, CreateCustomFieldPayload, UpdateCustomFieldPayload } from './resources';
 

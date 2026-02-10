@@ -10,3 +10,5 @@ export { TimeEntriesResource } from './TimeEntriesResource';
 export { TagsResource } from './TagsResource';
 export { BillingRatesResource } from './BillingRatesResource';
 export { GroupsResource } from './GroupsResource';
+export { InvoicesResource } from './InvoicesResource';
+export { ClientsResource } from './ClientsResource';
