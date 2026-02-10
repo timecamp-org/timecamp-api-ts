@@ -111,6 +111,42 @@ const taskRates = await timecampApi.billingRates.getTaskRates(12345);
 const groups = await timecampApi.groups.getAll();
 const newGroup = await timecampApi.groups.create({ name: 'Development Team', parent_id: 123 });
 await timecampApi.groups.update({ group_id: newGroup.group_id, name: 'Dev Team' });
+
+// Clients
+const clients = await timecampApi.clients.getAll();
+const client = await timecampApi.clients.create({
+  organizationName: 'Acme Corp',
+  firstName: 'John',
+  lastName: 'Doe',
+  email: 'john@acme.com',
+});
+await timecampApi.clients.update({ clientId: client.clientId, organizationName: 'Acme Corp Updated' });
+
+// Invoices
+const invoices = await timecampApi.invoices.getAll();
+const invoice = await timecampApi.invoices.create({
+  clientId: client.clientId,
+  issueDate: '2026-02-10',
+  addDate: '2026-02-10',
+  noteToClient: 'From 2026-01-26 to 2026-02-28',
+  currencyId: 1,
+  invoiceNumber: '1223',
+  entries: [
+    {
+      invoiceId: -1,
+      invoiceEntryId: -1,
+      description: '2026-01-26 07:53 ',
+      type: 0,
+      duration: 19980,
+      quantity: 5.55,
+      unitCost: 109,
+      taxId: 198,
+      name: '[ORG] Administration - Ewelina Łagos',
+      subTotal: 604.95,
+      ttEntriesIds: [263222996],
+    },
+  ],
+});
 ```
 
 ## API
@@ -177,6 +213,14 @@ new TimeCampAPI(apiKey: string, config?: TimeCampAPIConfig)
 | `groups.create(params)` | Create a new group | `params: { name: string, parent_id?: number }` | `Promise<TimeCampGroup>` |
 | `groups.update(params)` | Update an existing group | `params: { group_id: number, name?, parent_id? }` | `Promise<void>` |
 | `groups.delete(groupId)` | Delete a group | `groupId: number` | `Promise<void>` |
+| `clients.getAll()` | Get all clients | None | `Promise<TimeCampClientsResponse>` |
+| `clients.create(params)` | Create a new client | `params: TimeCampCreateClientRequest` | `Promise<TimeCampClient>` |
+| `clients.update(params)` | Update an existing client | `params: TimeCampUpdateClientRequest` | `Promise<TimeCampClient>` |
+| `clients.delete(clientId)` | Delete a client | `clientId: number` | `Promise<void>` |
+| `invoices.getAll()` | Get all invoices | None | `Promise<TimeCampInvoicesResponse>` |
+| `invoices.create(params)` | Create a new invoice from time entries | `params: TimeCampCreateInvoiceRequest` | `Promise<TimeCampInvoice>` |
+| `invoices.update(params)` | Update an existing invoice | `params: TimeCampUpdateInvoiceRequest` | `Promise<TimeCampInvoice>` |
+| `invoices.delete(invoiceId)` | Delete an invoice | `invoiceId: number` | `Promise<void>` |
 
 #### `user.get()`
 
@@ -776,6 +820,196 @@ interface TimeCampUpdateGroupRequest {
 }
 ```
 
+### Clients
+
+Manage clients for invoicing. Requires the invoicing module to be enabled.
+
+```typescript
+// List all clients
+const clients = await timecampApi.clients.getAll();
+console.log('Clients:', clients);
+
+// Create a client
+const client = await timecampApi.clients.create({
+  organizationName: 'Acme Corp',
+  firstName: 'John',
+  lastName: 'Doe',
+  email: 'john@acme.com',
+});
+console.log('Created client:', client);
+
+// Update a client
+const updatedClient = await timecampApi.clients.update({
+  clientId: client.clientId,
+  organizationName: 'Acme Corp Updated',
+  address: '123 Main St, New York, NY',
+});
+console.log('Updated client:', updatedClient);
+
+// Get tasks assigned to a client
+const clientTasks = await timecampApi.clients.getTasks(client.clientId);
+
+// Get tasks for multiple clients at once
+const multiClientTasks = await timecampApi.clients.getTasks([1412133, 1412134]);
+
+// Remove tasks from a client
+await timecampApi.clients.removeTasks(client.clientId, [101, 102]);
+
+// Delete a client (will fail if client has invoices)
+await timecampApi.clients.delete(client.clientId);
+```
+
+**Important Notes**:
+- `organizationName` is required when creating a client
+- Clients cannot be deleted if they have associated invoices
+
+**Client Types**:
+```typescript
+interface TimeCampClient {
+  clientId: number;
+  firstName: string;
+  lastName: string;
+  organizationName: string;
+  address: string;
+  currencyId: number;
+  email: string;
+  rootGroupId: number;
+  addedBy: number;
+  added: string;
+}
+
+interface TimeCampCreateClientRequest {
+  organizationName: string; // required
+  firstName?: string;
+  lastName?: string;
+  address?: string;
+  currencyId?: number;
+  email?: string;
+}
+
+interface TimeCampUpdateClientRequest {
+  clientId: number; // required
+  organizationName?: string;
+  firstName?: string;
+  lastName?: string;
+  address?: string;
+  currencyId?: number;
+  email?: string;
+}
+```
+
+### Invoices
+
+Create and manage invoices from time entries. Requires the invoicing module to be enabled.
+
+```typescript
+// List all invoices
+const invoices = await timecampApi.invoices.getAll();
+console.log('Invoices:', invoices);
+
+// Create an invoice from time entries
+const invoice = await timecampApi.invoices.create({
+  clientId: 1412133,
+  issueDate: '2026-02-10',
+  addDate: '2026-02-10',
+  noteToClient: 'From 2026-01-26 to 2026-02-28',
+  currencyId: 1,
+  invoiceNumber: '1223',
+  entries: [
+    {
+      invoiceId: -1,
+      invoiceEntryId: -1,
+      description: '2026-01-26 07:53 ',
+      type: 0,
+      duration: 19980,
+      quantity: 5.55,
+      unitCost: 109,
+      taxId: 198,
+      name: '[ORG] Administration - Ewelina Łagos',
+      subTotal: 604.95,
+      ttEntriesIds: [263222996],
+    },
+  ],
+});
+console.log('Created invoice:', invoice);
+
+// Update an existing invoice
+const updatedInvoice = await timecampApi.invoices.update({
+  invoiceId: invoice.invoiceId,
+  noteToClient: 'Updated note',
+  status: 1,
+});
+console.log('Updated invoice:', updatedInvoice);
+
+// Delete an invoice
+await timecampApi.invoices.delete(invoice.invoiceId);
+```
+
+**Key Concepts**:
+- When creating a new invoice, set `invoiceId: -1` on each entry (this is done automatically by the `create` method)
+- Set `invoiceEntryId: -1` for new entries
+- `ttEntriesIds` links invoice entries to time tracking entries by their IDs
+- `duration` is in seconds, `quantity` is in hours (duration / 3600)
+- `subTotal = quantity * unitCost`
+
+**Invoice Types**:
+```typescript
+interface TimeCampInvoice {
+  invoiceId: number;
+  clientId: number;
+  invoiceNumber: string;
+  description: string;
+  issueDate: string;
+  dueDate: string;
+  editDate: string;
+  status: number;
+  sentDate: string;
+  viewedDate: string;
+  addDate: string;
+  paidDate: string;
+  noteToClient: string;
+  pass: string;
+  poNumber: string;
+  userId: number;
+  currencyId: number;
+  rootGroupId: string;
+  publicHash: string;
+  storedFileId: number | null;
+  quote: boolean;
+  entries: TimeCampInvoiceEntry[];
+}
+
+interface TimeCampInvoiceEntry {
+  invoiceId: number;
+  invoiceEntryId: number;
+  description: string;
+  type: number;
+  quantity: number;
+  duration: number;
+  unitCost: number;
+  taxId: number;
+  name: string;
+  subTotal?: number;
+  ttEntriesIds?: number[];
+}
+
+interface TimeCampCreateInvoiceRequest {
+  clientId: number; // required
+  issueDate: string; // required
+  entries: TimeCampCreateInvoiceEntryRequest[]; // required
+  invoiceNumber?: string;
+  description?: string;
+  addDate?: string;
+  dueDate?: string;
+  noteToClient?: string;
+  currencyId?: number;
+  status?: number;
+  userId?: number;
+  rootGroupId?: number;
+  quote?: boolean;
+  // ... additional optional fields
+}
+```
 
 Fetch every task visible to the authenticated account, including archived tasks.
 
@@ -961,6 +1195,11 @@ Delete a time entry.
 Based on the [TimeCamp API documentation](https://developer.timecamp.com/).
 
 ## Recent Updates
+
+### Version 1.8.0
+- ✅ Added clients management (`clients.getAll()`, `clients.create()`, `clients.update()`, `clients.delete()`, `clients.getTasks()`, `clients.removeTasks()`)
+- ✅ Added invoices management (`invoices.getAll()`, `invoices.create()`, `invoices.update()`, `invoices.delete()`)
+- ✅ Invoice creation supports linking time entries via `ttEntriesIds`
 
 ### Version 1.7.0
 - ✅ Added `tasks.update()` method for updating tasks and assigning users

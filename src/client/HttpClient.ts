@@ -4,6 +4,8 @@ export interface MakeRequestOptions {
   params?: Record<string, string>;
   json?: any;
   formData?: Record<string, string>;
+  rawBody?: string;
+  contentType?: string;
   retryOn429?: boolean;
   maxRetries?: number;
   retryDelay?: number;
@@ -113,6 +115,9 @@ export class HttpClient {
         } else if (options.formData) {
           headers['Content-Type'] = 'application/x-www-form-urlencoded';
           body = new URLSearchParams(options.formData).toString();
+        } else if (options.rawBody) {
+          headers['Content-Type'] = options.contentType || 'application/x-www-form-urlencoded';
+          body = options.rawBody;
         }
 
         // Build params - for GET requests, add format=json by default

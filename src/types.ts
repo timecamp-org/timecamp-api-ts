@@ -512,3 +512,159 @@ export interface TimeCampGroupsResponse {
   name: string;
   parent_id: number;
 }
+
+// Invoice types
+export interface TimeCampInvoiceEntry {
+  invoiceId: number;
+  invoiceEntryId: number;
+  description: string;
+  type: number;
+  quantity: number;
+  duration: number;
+  unitCost: number;
+  taxId: number;
+  name: string;
+  subTotal?: number;
+  ttEntriesIds?: number[];
+}
+
+export interface TimeCampInvoice {
+  invoiceId: number;
+  clientId: number;
+  invoiceNumber: string;
+  description: string;
+  issueDate: string;
+  dueDate: string;
+  editDate: string;
+  status: number;
+  sentDate: string;
+  viewedDate: string;
+  addDate: string;
+  paidDate: string;
+  noteToClient: string;
+  pass: string;
+  poNumber: string;
+  userId: number;
+  currencyId: number;
+  rootGroupId: string;
+  publicHash: string;
+  storedFileId: number | null;
+  quote: boolean;
+  entries: TimeCampInvoiceEntry[];
+}
+
+export type TimeCampInvoicesResponse = Record<string, TimeCampInvoice>;
+
+export interface TimeCampCreateInvoiceEntryRequest {
+  invoiceId: number;
+  invoiceEntryId: number;
+  description: string;
+  type: number;
+  duration: number;
+  quantity: number;
+  unitCost: number;
+  taxId: number;
+  name: string;
+  subTotal: number;
+  ttEntriesIds?: number[];
+}
+
+export interface TimeCampCreateInvoiceRequest {
+  invoiceId?: number;
+  clientId: number;
+  description?: string;
+  issueDate: string;
+  editDate?: string;
+  total?: number;
+  status?: number;
+  sentDate?: string;
+  viewedDate?: string;
+  addDate?: string;
+  dueDate?: string;
+  paidDate?: string;
+  noteToClient?: string;
+  pass?: string;
+  poNumber?: string;
+  externalService?: string;
+  externalId?: string;
+  userId?: number;
+  currencyId?: number;
+  rootGroupId?: number;
+  entries: TimeCampCreateInvoiceEntryRequest[];
+  quote?: boolean;
+  publicHash?: string;
+  hasExpenses?: boolean;
+  expensesTotal?: number;
+  textStatus?: string;
+  invoiceNumber?: string;
+}
+
+export interface TimeCampUpdateInvoiceRequest {
+  invoiceId: number;
+  clientId?: number;
+  description?: string;
+  issueDate?: string;
+  editDate?: string;
+  total?: number;
+  status?: number;
+  sentDate?: string;
+  viewedDate?: string;
+  addDate?: string;
+  dueDate?: string;
+  paidDate?: string;
+  noteToClient?: string;
+  pass?: string;
+  poNumber?: string;
+  externalService?: string;
+  externalId?: string;
+  userId?: number;
+  currencyId?: number;
+  rootGroupId?: number;
+  entries?: TimeCampCreateInvoiceEntryRequest[];
+  quote?: boolean;
+  publicHash?: string;
+  hasExpenses?: boolean;
+  expensesTotal?: number;
+  textStatus?: string;
+  invoiceNumber?: string;
+}
+
+// Client types
+export interface TimeCampClient {
+  clientId: number;
+  firstName: string;
+  lastName: string;
+  organizationName: string;
+  address: string;
+  currencyId: number;
+  email: string;
+  rootGroupId: number;
+  addedBy: number;
+  added: string;
+}
+
+export type TimeCampClientsResponse = Record<string, TimeCampClient>;
+
+export interface TimeCampCreateClientRequest {
+  organizationName: string;
+  firstName?: string;
+  lastName?: string;
+  address?: string;
+  currencyId?: number;
+  email?: string;
+}
+
+export interface TimeCampUpdateClientRequest {
+  clientId: number;
+  organizationName?: string;
+  firstName?: string;
+  lastName?: string;
+  address?: string;
+  currencyId?: number;
+  email?: string;
+}
+
+export interface TimeCampClientTasksResponse {
+  [clientId: string]: number[];
+}
+
