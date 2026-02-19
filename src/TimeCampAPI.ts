@@ -54,7 +54,7 @@ export class TimeCampAPI {
     this._customFields = new CustomFieldsResource(this.httpClient);
     this._users = new UsersResource(this.httpClient, this._user);
     this._tasks = new TasksResource(this.httpClient, this._user);
-    this._timeEntries = new TimeEntriesResource(this.httpClient);
+    this._timeEntries = new TimeEntriesResource(this.httpClient, this._tasks);
     this._tags = new TagsResource(this.httpClient);
     this._billingRates = new BillingRatesResource(this.httpClient);
     this._groups = new GroupsResource(this.httpClient);

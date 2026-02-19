@@ -3,6 +3,7 @@ import { UserResource } from './UserResource';
 import { HttpClient } from '../client';
 import {
   TimeCampTask,
+  TimeCampRawTask,
   TimeCampTasksResponse,
   TasksAPIResponse,
   GetActiveUserTasksOptions,
@@ -30,6 +31,32 @@ export class TasksResource extends BaseResource {
    */
   byId(id: number): ResourceCustomFieldsAPI {
     return this.createResourceCustomFieldsAPI('task', id);
+  }
+
+  /**
+   * Get a single task by ID
+   */
+  async getById(taskId: number): Promise<TimeCampTask | null> {
+    try {
+      const response = await this.makeRequest<TimeCampRawTask>('GET', 'tasks', {
+        params: { task_id: String(taskId) },
+      });
+
+      if (!response || typeof response !== 'object' || !response.task_id) return null;
+
+      const { tags, ...taskWithoutTags } = response;
+      return {
+        ...taskWithoutTags,
+        task_id: parseInt(taskWithoutTags.task_id, 10),
+        parent_id: parseInt(taskWithoutTags.parent_id, 10),
+        level: parseInt(taskWithoutTags.level, 10),
+        archived: parseInt(taskWithoutTags.archived, 10),
+        billable: parseInt(taskWithoutTags.billable, 10),
+        user_access_type: parseInt(taskWithoutTags.user_access_type, 10),
+      } as TimeCampTask;
+    } catch {
+      return null;
+    }
   }
 
   /**

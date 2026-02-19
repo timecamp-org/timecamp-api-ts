@@ -1,4 +1,6 @@
 import { BaseResource, ResourceCustomFieldsAPI } from './BaseResource';
+import { TasksResource } from './TasksResource';
+import { HttpClient } from '../client';
 import {
   TimeCampTimeEntry,
   TimeCampTimeEntriesRequest,
@@ -11,6 +13,12 @@ import {
  * Resource for time entries management
  */
 export class TimeEntriesResource extends BaseResource {
+  private tasksResource: TasksResource;
+
+  constructor(httpClient: HttpClient, tasksResource: TasksResource) {
+    super(httpClient);
+    this.tasksResource = tasksResource;
+  }
   /**
    * Get custom fields API for a specific time entry
    */
@@ -95,7 +103,13 @@ export class TimeEntriesResource extends BaseResource {
       }
 
       if (entry.billable !== undefined) {
-        requestBody.billable = entry.billable;
+        requestBody.billable = entry.billable ? 1 : 0;
+      } else if (entry.task_id) {
+        // timecamp api is not doing this by default so we need to get the task and set the billable flag
+        const task = await this.tasksResource.getById(entry.task_id);
+        if (task) {
+          requestBody.billable = task.billable;
+        }
       }
 
       if (entry.tags !== undefined) {
@@ -136,7 +150,15 @@ export class TimeEntriesResource extends BaseResource {
       if (entry.description !== undefined) updateData.description = entry.description;
       if (entry.start_time !== undefined) updateData.start_time = entry.start_time;
       if (entry.end_time !== undefined) updateData.end_time = entry.end_time;
-      if (entry.billable !== undefined) updateData.billable = entry.billable;
+      if (entry.billable !== undefined) {
+        updateData.billable = entry.billable ? 1 : 0;
+      } else if (entry.task_id) {
+        // timecamp api is not doing this by default so we need to get the task and set the billable flag
+        const task = await this.tasksResource.getById(entry.task_id);
+        if (task) {
+          updateData.billable = task.billable;
+        }
+      }
 
       const response = await this.makeRequest<any>('PUT', 'entries', { json: updateData });
 

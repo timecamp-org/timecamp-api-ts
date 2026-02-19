@@ -179,6 +179,36 @@ export interface GetActiveUserTasksOptions {
   includeFullBreadcrumb?: boolean;
 }
 
+export interface TimeCampRawTask {
+  task_id: string;
+  parent_id: string;
+  assigned_by?: string;
+  name: string;
+  external_task_id?: string;
+  external_parent_id?: string;
+  task_key?: string | null;
+  level: string;
+  archived: string;
+  keywords?: string;
+  budgeted?: string;
+  budget_unit: string;
+  root_group_id?: string;
+  billable: string;
+  note?: string;
+  public_hash?: string | null;
+  add_date?: string;
+  modify_time?: string;
+  color?: string;
+  user_access_type: string;
+  tags?: string;
+  users?: Record<string, { user_id: number; role_id: number }>;
+  groups?: string[];
+  roles?: string[];
+  perms?: Record<string, number>;
+  canTrackTime?: boolean;
+  [key: string]: any;
+}
+
 export interface TimeCampTasksResponse {
   [key: string]: TimeCampTask;
 }
