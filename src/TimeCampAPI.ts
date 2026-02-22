@@ -12,6 +12,7 @@ import {
   GroupsResource,
   InvoicesResource,
   ClientsResource,
+  ComputerActivitiesResource,
 } from './resources';
 
 /**
@@ -44,6 +45,7 @@ export class TimeCampAPI {
   private _groups: GroupsResource;
   private _invoices: InvoicesResource;
   private _clients: ClientsResource;
+  private _computerActivities: ComputerActivitiesResource;
 
   constructor(apiKey: string, config?: TimeCampAPIConfig) {
     this.httpClient = new HttpClient(apiKey, config);
@@ -60,6 +62,7 @@ export class TimeCampAPI {
     this._groups = new GroupsResource(this.httpClient);
     this._invoices = new InvoicesResource(this.httpClient);
     this._clients = new ClientsResource(this.httpClient);
+    this._computerActivities = new ComputerActivitiesResource(this.httpClient, this._user);
   }
 
   /**
@@ -137,5 +140,12 @@ export class TimeCampAPI {
    */
   get clients(): ClientsResource {
     return this._clients;
+  }
+
+  /**
+   * Computer activities tracking
+   */
+  get computerActivities(): ComputerActivitiesResource {
+    return this._computerActivities;
   }
 }

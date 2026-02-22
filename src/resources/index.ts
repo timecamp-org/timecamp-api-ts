@@ -12,3 +12,4 @@ export { BillingRatesResource } from './BillingRatesResource';
 export { GroupsResource } from './GroupsResource';
 export { InvoicesResource } from './InvoicesResource';
 export { ClientsResource } from './ClientsResource';
+export { ComputerActivitiesResource } from './ComputerActivitiesResource';

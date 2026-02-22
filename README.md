@@ -101,6 +101,20 @@ const updatedEntry = await timecampApi.timeEntries.update(entryId, {
 
 const deleteResult = await timecampApi.timeEntries.delete(entryId);
 
+// Computer Activities (max 7 days, includes application names)
+const activities = await timecampApi.computerActivities.get({
+  date_from: '2024-01-01',
+  date_to: '2024-01-07',
+});
+// Each activity includes application_name resolved automatically
+
+// Computer activities for specific users
+const userActivities = await timecampApi.computerActivities.get({
+  date_from: '2024-01-01',
+  date_to: '2024-01-03',
+  user_ids: '123,456',
+});
+
 // Billing Rates
 await timecampApi.billingRates.setTaskRate(12345, { rateTypeId: 1, value: 150 });
 await timecampApi.billingRates.setUserRate(100, { rateTypeId: 1, value: 100 });
@@ -200,6 +214,7 @@ new TimeCampAPI(apiKey: string, config?: TimeCampAPIConfig)
 | `timeEntries.getTags(entryId)` | Get tags for time entry | `entryId: number` | `Promise<TimeCampEntryTagsResponse>` |
 | `timeEntries.addTags(entryId, tagIds)` | Add tags to time entry | `entryId: number, tagIds: number[]` | `Promise<string[]>` |
 | `timeEntries.removeTags(entryId, tagIds)` | Remove tags from time entry | `entryId: number, tagIds: number[]` | `Promise<string[]>` |
+| `computerActivities.get(params)` | Get computer activities with app names | `params: TimeCampComputerActivitiesRequest` | `Promise<TimeCampComputerActivity[]>` |
 | `billingRates.getTaskRates(taskId, rateTypeId?)` | Get billing rates for task | `taskId: number, rateTypeId?: string` | `Promise<TimeCampBillingRatesResponse>` |
 | `billingRates.setTaskRate(taskId, data)` | Set/update task billing rate | `taskId: number, data: TimeCampSetRateRequest` | `Promise<TimeCampBillingRate>` |
 | `billingRates.getUserRates(userId, rateTypeId?)` | Get billing rates for user | `userId: number, rateTypeId?: string` | `Promise<TimeCampBillingRatesResponse>` |
@@ -649,6 +664,60 @@ await timecampApi.timeEntries.addTags(101434259, [13, 14]);
 // Remove tags from time entry
 await timecampApi.timeEntries.removeTags(101434259, [15]);
 // Returns: ['15'] (IDs of successfully removed tags)
+```
+
+### Computer Activities
+
+Retrieve computer activity tracking data with application names automatically resolved.
+
+```typescript
+// Get activities for current user (default: 'me')
+const activities = await timecampApi.computerActivities.get({
+  date_from: '2024-01-01',
+  date_to: '2024-01-07',
+});
+
+// Get activities for specific users
+const activities = await timecampApi.computerActivities.get({
+  date_from: '2024-01-01',
+  date_to: '2024-01-03',
+  user_ids: '123,456',
+});
+
+// Each activity includes the resolved application_name
+for (const activity of activities) {
+  console.log(`${activity.date} ${activity.start_time} - ${activity.application_name}: ${activity.window_title}`);
+}
+```
+
+**Important Notes**:
+- Maximum date range is 7 days. Exceeding this will throw an error.
+- `user_ids` defaults to `'me'` (current authenticated user)
+- Multiple users result in separate API calls combined into one result
+- Application names are automatically fetched via the `/application` endpoint and merged into each activity
+
+**Computer Activity Types**:
+```typescript
+interface TimeCampComputerActivitiesRequest {
+  date_from: string; // YYYY-MM-DD format (required)
+  date_to: string; // YYYY-MM-DD format (required)
+  user_ids?: string; // Comma-separated user IDs or 'me' (default: 'me')
+}
+
+interface TimeCampComputerActivity {
+  user_id: string;
+  application_id: string;
+  end_time: string;
+  time_span: number;
+  window_title_id: string;
+  end_date: string;
+  task_id: string;
+  entry_id: string;
+  updated_at: string;
+  update_date: string;
+  application_name?: string; // Resolved from /application endpoint
+  application_info?: string; // Additional info (e.g. domain)
+}
 ```
 
 ### Billing Rates
@@ -1195,6 +1264,9 @@ Delete a time entry.
 Based on the [TimeCamp API documentation](https://developer.timecamp.com/).
 
 ## Recent Updates
+
+### Version 1.9.0
+- Added computer activities tracking (`computerActivities.get()`) with automatic application name resolution
 
 ### Version 1.8.0
 - ✅ Added clients management (`clients.getAll()`, `clients.create()`, `clients.update()`, `clients.delete()`, `clients.getTasks()`, `clients.removeTasks()`)

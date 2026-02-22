@@ -698,3 +698,42 @@ export interface TimeCampClientTasksResponse {
   [clientId: string]: number[];
 }
 
+// Computer Activities types
+export interface TimeCampComputerActivitiesRequest {
+  /** Start date in YYYY-MM-DD format */
+  date_from: string;
+  /** End date in YYYY-MM-DD format */
+  date_to: string;
+  /** Comma-separated user IDs, or 'me' for current user (default: 'me') */
+  user_ids?: string;
+}
+
+export interface TimeCampComputerActivity {
+  user_id: string;
+  application_id: string;
+  end_time: string;
+  time_span: number;
+  window_title_id: string;
+  end_date: string;
+  task_id: string;
+  entry_id: string;
+  updated_at: string;
+  update_date: string;
+  /** Resolved from /application endpoint */
+  application_name?: string;
+  /** Additional info from /application endpoint (e.g. domain, category) */
+  application_info?: string;
+  /** application_info if set, otherwise application_name */
+  application_display_name?: string;
+  [key: string]: any;
+}
+
+export interface TimeCampApplication {
+  application_id: string;
+  app_name: string;
+  aditional_info: string | null;
+  full_name: string | null;
+  category_id: string;
+  [key: string]: any;
+}
+
