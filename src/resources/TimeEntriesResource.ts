@@ -37,6 +37,7 @@ export class TimeEntriesResource extends BaseResource {
     queryParams.from = params.date_from;
     queryParams.to = params.date_to;
     queryParams.opt_fields = 'tags';
+    if (params.include_rates) queryParams.include_rates = 'true';
 
     const response = await this.makeRequest<any>('GET', 'entries', { params: queryParams });
     const entries: TimeCampTimeEntry[] = [];
@@ -72,6 +73,11 @@ export class TimeEntriesResource extends BaseResource {
                 }))
               : [],
             hasEntryLocationHistory: Boolean(entry.hasEntryLocationHistory),
+            ...(params.include_rates && {
+              total_cost: parseFloat(entry.total_cost) || 0,
+              total_income: parseFloat(entry.total_income) || 0,
+              rate_income: parseFloat(entry.rate_income) || 0,
+            }),
           });
         }
       }

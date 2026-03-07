@@ -240,6 +240,9 @@ export interface TimeCampTimeEntry {
   description: string;
   tags: TimeCampTag[];
   hasEntryLocationHistory: boolean;
+  total_cost?: number;
+  total_income?: number;
+  rate_income?: number;
 }
 
 export interface TimeCampTag {
@@ -255,6 +258,7 @@ export interface TimeCampTimeEntriesRequest {
   task_ids?: string;
   date_from: string;
   date_to: string;
+  include_rates?: boolean;
 }
 
 export interface TimeCampCreateTimeEntryRequest {
