@@ -181,7 +181,7 @@ new TimeCampAPI(apiKey: string, config?: TimeCampAPIConfig)
 | Method | Description | Parameters | Returns |
 |--------|-------------|------------|---------|
 | `user.get()` | Get information about the current user | None | `Promise<TimeCampUser>` |
-| `users.getAll()` | Get all users | None | `Promise<Record<string, any>>` |
+| `users.getAll(options?)` | Get all users | `options?: { skipInactive?: boolean }` | `Promise<Record<string, any>>` |
 | `users.invite()` | Invite a user to TimeCamp account | `params: TimeCampUserInviteRequest` | `Promise<TimeCampUserInviteResponse>` |
 | `users.byId(id)` | Chainable selector for a user resource | `id: number` | `{ getAllCustomFields, getCustomField, setCustomField, updateCustomField, deleteCustomField }` |
 | `tasks.byId(id)` | Chainable selector for a task resource | `id: number` | `{ getAllCustomFields, getCustomField, setCustomField, updateCustomField, deleteCustomField }` |
@@ -464,9 +464,13 @@ await api.tasks.update({
 });
 ```
 
-#### `users.getAll()`
+#### `users.getAll(options?: { skipInactive?: boolean })`
 
 List all users visible to the authenticated account.
+
+**Parameters**:
+- `options`: Optional configuration
+  - `skipInactive`: If set to `true`, filters out users who have the `disabled_user` setting set to `1`. This involves additional API calls to fetch user settings in batches of 100.
 
 Returns: `Promise<Record<string, any>>`
 

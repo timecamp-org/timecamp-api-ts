@@ -22,9 +22,75 @@ export class UsersResource extends BaseResource {
 
   /**
    * Get all users in the workspace
+   * @param options.skipInactive If true, filters out users who have 'disabled_user' setting set to 1
    */
-  async getAll(): Promise<TimeCampUsersMapResponse> {
-    return this.makeRequest<TimeCampUsersMapResponse>('GET', 'users');
+  async getAll(options?: { skipInactive?: boolean }): Promise<TimeCampUsersMapResponse> {
+    const usersResponse = await this.makeRequest<TimeCampUsersMapResponse>('GET', 'users');
+
+    if (!options?.skipInactive) {
+      return usersResponse;
+    }
+
+    const usersArray: any[] = Array.isArray(usersResponse)
+      ? usersResponse
+      : Object.values(usersResponse || {});
+
+    if (usersArray.length === 0) {
+      return usersResponse;
+    }
+
+    // Extract user IDs
+    const userIds = usersArray
+      .map((user) => {
+        const id = user.user_id ?? user.id ?? user.userId;
+        return id !== undefined ? String(id) : undefined;
+      })
+      .filter((id): id is string => id !== undefined);
+
+    // Batch user IDs into groups of 100 to check 'disabled_user' setting
+    const batchSize = 100;
+    const disabledUserIds = new Set<string>();
+
+    for (let i = 0; i < userIds.length; i += batchSize) {
+      const batch = userIds.slice(i, i + batchSize);
+      const endpoint = `user/${batch.join(',')}/setting`;
+
+      try {
+        const settingsResponse = await this.makeRequest<any>('GET', endpoint, {
+          params: { 'name[]': 'disabled_user' },
+        });
+
+        const settingsArray = Array.isArray(settingsResponse)
+          ? settingsResponse
+          : Object.values(settingsResponse || {});
+
+        settingsArray.forEach((setting: any) => {
+          if (setting.name === 'disabled_user' && String(setting.value) === '1') {
+            disabledUserIds.add(String(setting.userId));
+          }
+        });
+      } catch (error) {
+        // Log error but continue with other batches
+        console.error(`Failed to fetch settings for user batch:`, error);
+      }
+    }
+
+    // Filter out inactive users
+    if (Array.isArray(usersResponse)) {
+      return usersResponse.filter((user) => {
+        const id = user.user_id ?? user.id ?? user.userId;
+        return !disabledUserIds.has(String(id));
+      }) as unknown as TimeCampUsersMapResponse;
+    } else {
+      const filtered: TimeCampUsersMapResponse = {};
+      for (const [key, user] of Object.entries(usersResponse)) {
+        const id = user.user_id ?? user.id ?? user.userId;
+        if (!disabledUserIds.has(String(id))) {
+          filtered[key] = user;
+        }
+      }
+      return filtered;
+    }
   }
 
   /**
