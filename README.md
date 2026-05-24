@@ -10,6 +10,14 @@ Source code: https://github.com/timecamp-org/timecamp-api-ts
 npm install timecamp-api
 ```
 
+## Runtime Support
+
+`timecamp-api` targets server-side JavaScript runtimes with standard Fetch API support, including Node.js 18+, Cloudflare Workers, Bun, and Deno-compatible environments.
+
+The library uses Web Platform APIs such as `fetch`, `AbortController`, `URL`, and `URLSearchParams`. It does not depend on Node.js built-in modules, so Cloudflare Workers projects should not need `compatibility_flags = ["nodejs_compat"]` just to use this package.
+
+Do not use this package directly in browser code unless you are deliberately exposing a TimeCamp API key to that environment.
+
 ## Usage
 
 ```typescript
